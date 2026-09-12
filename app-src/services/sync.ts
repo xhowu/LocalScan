@@ -1,5 +1,14 @@
 import type { InventoryItem } from '../types';
-import { listItems, putItem, getActiveWarehouseId, createWarehouse, listWarehouses, allItemsIncludingDeleted } from '../db';
+import {
+  listItems,
+  putItem,
+  getItem,
+  getActiveWarehouseId,
+  createWarehouse,
+  listWarehouses,
+  allItemsIncludingDeleted,
+  uid,
+} from '../db';
 
 export interface MergeResult {
   created: number;
@@ -23,6 +32,11 @@ const FIELDS: Array<keyof InventoryItem> = [
   'deleted',
 ];
 
+/**
+ * Merge remote items into ONE target warehouse only.
+ * Never overwrite items that belong to other warehouses (by id).
+ * If remote id already exists elsewhere, allocate a new id.
+ */
 export async function mergeRemoteItems(
   remote: InventoryItem[],
   targetWarehouseId?: string | null,
@@ -31,6 +45,7 @@ export async function mergeRemoteItems(
   if (!wid) {
     wid = createWarehouse('我的仓库').id;
   }
+
   const localAll = listItems({ warehouseId: wid, includeDeleted: true });
   const byId = new Map(localAll.map((i) => [i.id, i]));
   const byCode = new Map<string, InventoryItem>();
@@ -39,12 +54,21 @@ export async function mergeRemoteItems(
   const result: MergeResult = { created: 0, updated: 0, skipped: 0, conflicts: [] };
 
   for (const r of remote) {
-    const local = byId.get(r.id) ?? (r.code ? byCode.get(r.code) : undefined);
+    // Only treat as "same item" if it already lives in THIS warehouse
+    let local = byId.get(r.id);
+    if (!local && r.code) local = byCode.get(r.code);
 
     if (!local) {
+      let newId = r.id || uid();
+      // If this id is owned by another warehouse, mint a new id — do NOT steal
+      const existing = getItem(newId);
+      if (existing && existing.warehouseId !== wid) {
+        newId = uid();
+      }
       const created: InventoryItem = {
         ...r,
-        warehouseId: wid,
+        id: newId,
+        warehouseId: wid, // force target warehouse
         deleted: r.deleted ?? false,
         customFields: r.customFields ?? [],
         imageIds: r.imageIds ?? [],
@@ -63,6 +87,8 @@ export async function mergeRemoteItems(
 
     const remoteNewer = r.updatedAt > local.updatedAt;
     const merged: InventoryItem = { ...local };
+    merged.warehouseId = wid; // never leave target warehouse
+
     for (const f of FIELDS) {
       const lv = local[f];
       const rv = r[f];

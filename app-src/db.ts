@@ -1,5 +1,5 @@
 import type { InventoryItem, Warehouse } from './types';
-import { DEFAULT_CATEGORIES, nowIso } from './types';
+import { DEFAULT_CATEGORIES, nowIso, isNearExpiry, isExpired } from './types';
 
 const KEYS = {
   items: 'localscan.items.v2',
@@ -14,7 +14,7 @@ type ThemeMode = 'light' | 'dark' | 'system';
 const mem = {
   items: new Map<string, InventoryItem>(),
   warehouses: new Map<string, Warehouse>(),
-  images: new Map<string, string>(), // id -> dataUrl
+  images: new Map<string, string>(),
   meta: new Map<string, unknown>(),
   ready: false,
 };
@@ -58,14 +58,13 @@ function migrateV1() {
     const rows = JSON.parse(oldItems) as Array<Partial<InventoryItem> & { id: string; name: string }>;
     if (!rows.length) return;
     const wid = uid();
-    const wh: Warehouse = {
+    mem.warehouses.set(wid, {
       id: wid,
       name: '我的仓库',
       note: '',
       createdAt: nowIso(),
       updatedAt: nowIso(),
-    };
-    mem.warehouses.set(wid, wh);
+    });
     for (const r of rows) {
       const item: InventoryItem = {
         id: r.id,
@@ -74,6 +73,7 @@ function migrateV1() {
         codeType: (r.codeType as InventoryItem['codeType']) ?? null,
         name: r.name,
         category: r.category ?? '其他',
+        location: (r as { location?: string }).location ?? '',
         note: r.note ?? '',
         qty: r.qty ?? 0,
         unit: r.unit ?? '件',
@@ -81,6 +81,10 @@ function migrateV1() {
         salePrice: null,
         currency: r.currency ?? 'CNY',
         lowStockAt: r.lowStockAt ?? 2,
+        productionDate: null,
+        shelfLifeMonths: null,
+        expiryDate: null,
+        nearExpiryMonths: 1,
         customFields: [],
         imageIds: r.imageIds ?? [],
         createdAt: r.createdAt ?? nowIso(),
@@ -108,16 +112,15 @@ function seed() {
   const wid = uid();
   const t0 = Date.now();
   const ts = (offsetMin: number) => new Date(t0 - offsetMin * 60_000).toISOString();
-  const wh: Warehouse = {
+  mem.warehouses.set(wid, {
     id: wid,
     name: '我的仓库',
     note: '本机默认仓库',
     createdAt: ts(10080),
     updatedAt: ts(5),
-  };
-  mem.warehouses.set(wid, wh);
+  });
   mem.meta.set('activeWarehouseId', wid);
-  mem.meta.set('categories', ['数码', '工具', '家居', '服饰', '耗材', '办公', '食品', '其他']);
+  mem.meta.set('categories', [...DEFAULT_CATEGORIES]);
   mem.meta.set('theme', 'system');
 
   const samples: Array<Omit<InventoryItem, 'id' | 'createdAt' | 'updatedAt' | 'version' | 'deleted'>> = [
@@ -127,6 +130,7 @@ function seed() {
       codeType: 'EAN13',
       name: '无线键盘 K3',
       category: '数码',
+      location: 'A架-01',
       note: '已贴资产标',
       qty: 12,
       unit: '个',
@@ -134,6 +138,10 @@ function seed() {
       salePrice: null,
       currency: 'CNY',
       lowStockAt: 3,
+      productionDate: null,
+      shelfLifeMonths: null,
+      expiryDate: null,
+      nearExpiryMonths: 1,
       customFields: [],
       imageIds: [],
     },
@@ -143,6 +151,7 @@ function seed() {
       codeType: 'EAN13',
       name: 'Type-C 数据线',
       category: '耗材',
+      location: 'B抽-02',
       note: '',
       qty: 48,
       unit: '条',
@@ -150,6 +159,10 @@ function seed() {
       salePrice: 29.9,
       currency: 'CNY',
       lowStockAt: 10,
+      productionDate: null,
+      shelfLifeMonths: null,
+      expiryDate: null,
+      nearExpiryMonths: 1,
       customFields: [],
       imageIds: [],
     },
@@ -159,6 +172,7 @@ function seed() {
       codeType: 'EAN13',
       name: '便携风扇',
       category: '数码',
+      location: 'A架-03',
       note: '夏季常用',
       qty: 2,
       unit: '台',
@@ -166,6 +180,10 @@ function seed() {
       salePrice: null,
       currency: 'CNY',
       lowStockAt: 2,
+      productionDate: null,
+      shelfLifeMonths: null,
+      expiryDate: null,
+      nearExpiryMonths: 1,
       customFields: [],
       imageIds: [],
     },
@@ -175,6 +193,7 @@ function seed() {
       codeType: 'QR',
       name: '收纳箱 · 中号',
       category: '家居',
+      location: 'C区-堆头',
       note: '',
       qty: 15,
       unit: '个',
@@ -182,23 +201,24 @@ function seed() {
       salePrice: null,
       currency: 'CNY',
       lowStockAt: 4,
+      productionDate: null,
+      shelfLifeMonths: null,
+      expiryDate: null,
+      nearExpiryMonths: 1,
       customFields: [],
       imageIds: [],
     },
   ];
-
-  // Stagger timestamps so each item has a distinct, realistic time
   samples.forEach((s, i) => {
-    const created = ts(1440 - i * 37);
-    const item: InventoryItem = {
+    const id = uid();
+    mem.items.set(id, {
       ...s,
-      id: uid(),
-      createdAt: created,
+      id,
+      createdAt: ts(1440 - i * 37),
       updatedAt: ts(30 - i * 5),
       version: 1,
       deleted: false,
-    };
-    mem.items.set(item.id, item);
+    });
   });
   mem.meta.set(KEYS.migrated, true);
   persistAll();
@@ -210,13 +230,11 @@ function bootstrap() {
   const warehouses = load<Warehouse[]>(KEYS.warehouses, []);
   const meta = load<Record<string, unknown>>(KEYS.meta, {});
   const images = load<Record<string, string>>(KEYS.images, {});
-
   for (const i of items) mem.items.set(i.id, i);
   for (const w of warehouses) mem.warehouses.set(w.id, w);
   for (const [k, v] of Object.entries(meta)) mem.meta.set(k, v);
   for (const [k, v] of Object.entries(images)) mem.images.set(k, v);
   mem.ready = true;
-
   if (!mem.meta.get(KEYS.migrated) && mem.warehouses.size === 0 && mem.items.size === 0) {
     const hasV1 = localStorage.getItem('localscan.items');
     if (hasV1) migrateV1();
@@ -224,13 +242,10 @@ function bootstrap() {
   }
 }
 
-/* ---------- warehouses ---------- */
-
+/* warehouses */
 export function listWarehouses(): Warehouse[] {
   bootstrap();
-  return Array.from(mem.warehouses.values()).sort((a, b) =>
-    a.createdAt < b.createdAt ? 1 : -1,
-  );
+  return Array.from(mem.warehouses.values()).sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
 }
 
 export function getWarehouse(id: string) {
@@ -241,7 +256,13 @@ export function getWarehouse(id: string) {
 export function createWarehouse(name: string, note = '') {
   bootstrap();
   const now = nowIso();
-  const w: Warehouse = { id: uid(), name: name.trim() || '新仓库', note, createdAt: now, updatedAt: now };
+  const w: Warehouse = {
+    id: uid(),
+    name: name.trim() || '新仓库',
+    note,
+    createdAt: now,
+    updatedAt: now,
+  };
   mem.warehouses.set(w.id, w);
   persistAll();
   return w;
@@ -286,18 +307,18 @@ export function setActiveWarehouseId(id: string) {
 
 export function warehouseStats(warehouseId: string) {
   bootstrap();
-  const rows = Array.from(mem.items.values()).filter(
-    (i) => i.warehouseId === warehouseId && !i.deleted,
-  );
+  const rows = Array.from(mem.items.values()).filter((i) => i.warehouseId === warehouseId && !i.deleted);
   return {
     total: rows.length,
-    low: rows.filter((i) => i.qty <= i.lowStockAt).length,
     inStock: rows.filter((i) => i.qty > 0).length,
+    low: rows.filter((i) => i.qty <= i.lowStockAt && i.qty > 0).length,
+    zero: rows.filter((i) => i.qty === 0).length,
+    near: rows.filter((i) => isNearExpiry(i)).length,
+    expired: rows.filter((i) => isExpired(i)).length,
   };
 }
 
-/* ---------- categories ---------- */
-
+/* categories / locations */
 export function listCategories(): string[] {
   bootstrap();
   const saved = mem.meta.get('categories');
@@ -324,8 +345,70 @@ export function addCategory(name: string) {
   return list;
 }
 
-/* ---------- theme ---------- */
+export function listLocations(): string[] {
+  bootstrap();
+  const saved = mem.meta.get('locations');
+  if (Array.isArray(saved)) return saved as string[];
+  const used = new Set(
+    Array.from(mem.items.values())
+      .filter((i) => !i.deleted && i.location)
+      .map((i) => i.location),
+  );
+  return Array.from(used);
+}
 
+export function addLocation(name: string) {
+  bootstrap();
+  const list = listLocations();
+  const n = name.trim();
+  if (!n) return list;
+  if (!list.includes(n)) {
+    list.push(n);
+    mem.meta.set('locations', list);
+    persistAll();
+  }
+  return list;
+}
+
+export function saveCategories(list: string[]) {
+  bootstrap();
+  mem.meta.set('categories', list.map((s) => s.trim()).filter(Boolean));
+  persistAll();
+}
+
+export function saveLocations(list: string[]) {
+  bootstrap();
+  mem.meta.set('locations', list.map((s) => s.trim()).filter(Boolean));
+  persistAll();
+}
+
+export function deleteCategory(name: string) {
+  bootstrap();
+  mem.meta.set('categories', listCategories().filter((c) => c !== name));
+  for (const item of mem.items.values()) {
+    if (item.category === name) {
+      item.category = '其他';
+      item.updatedAt = nowIso();
+      item.version += 1;
+    }
+  }
+  persistAll();
+}
+
+export function deleteLocation(name: string) {
+  bootstrap();
+  mem.meta.set('locations', listLocations().filter((c) => c !== name));
+  for (const item of mem.items.values()) {
+    if (item.location === name) {
+      item.location = '';
+      item.updatedAt = nowIso();
+      item.version += 1;
+    }
+  }
+  persistAll();
+}
+
+/* theme */
 export function getTheme(): ThemeMode {
   bootstrap();
   return (mem.meta.get('theme') as ThemeMode) ?? 'system';
@@ -337,8 +420,7 @@ export function setTheme(mode: ThemeMode) {
   persistAll();
 }
 
-/* ---------- items ---------- */
-
+/* items */
 export function listItems(opts?: {
   warehouseId?: string | null;
   includeDeleted?: boolean;
@@ -372,19 +454,23 @@ export function getItem(id: string) {
   return mem.items.get(id) ?? null;
 }
 
+export function putItem(item: InventoryItem) {
+  bootstrap();
+  mem.items.set(item.id, item);
+  persistAll();
+  return item;
+}
+
 export function findByCode(code: string, warehouseId?: string | null) {
   const wid = warehouseId ?? getActiveWarehouseId();
   const all = Array.from(mem.items.values());
-  return (
-    all.find((i) => !i.deleted && i.code === code && (!wid || i.warehouseId === wid)) ?? null
-  );
+  return all.find((i) => !i.deleted && i.code === code && (!wid || i.warehouseId === wid)) ?? null;
 }
 
 export function createItem(
   data: Omit<InventoryItem, 'id' | 'createdAt' | 'updatedAt' | 'version' | 'deleted'>,
 ) {
   bootstrap();
-  // Always use the device clock at call time
   const stamp = new Date().toISOString();
   const item: InventoryItem = {
     ...data,
@@ -397,6 +483,7 @@ export function createItem(
   };
   mem.items.set(item.id, item);
   if (item.category) addCategory(item.category);
+  if (item.location) addLocation(item.location);
   persistAll();
   return item;
 }
@@ -415,6 +502,7 @@ export function updateItem(id: string, patch: Partial<InventoryItem>) {
   };
   mem.items.set(id, next);
   if (next.category) addCategory(next.category);
+  if (next.location) addLocation(next.location);
   persistAll();
   return next;
 }
@@ -447,7 +535,26 @@ export function wipeAll() {
   localStorage.removeItem(KEYS.meta);
   localStorage.removeItem(KEYS.images);
   localStorage.removeItem(KEYS.migrated);
-  seed();
+  mem.ready = false;
+  bootstrap();
+}
+
+export type FieldTemplate = { key: string; label: string };
+
+export function listFieldTemplates(): FieldTemplate[] {
+  bootstrap();
+  const saved = mem.meta.get('fieldTemplates');
+  if (Array.isArray(saved)) return saved as FieldTemplate[];
+  return [];
+}
+
+export function saveFieldTemplates(list: FieldTemplate[]) {
+  bootstrap();
+  mem.meta.set(
+    'fieldTemplates',
+    list.filter((f) => f.label.trim()),
+  );
+  persistAll();
 }
 
 export function statsForActive() {
@@ -465,12 +572,3 @@ export function allItemsIncludingDeleted(warehouseId?: string | null) {
   const rows = Array.from(mem.items.values());
   return wid ? rows.filter((i) => i.warehouseId === wid) : rows;
 }
-
-export function putItem(item: InventoryItem) {
-  bootstrap();
-  mem.items.set(item.id, item);
-  persistAll();
-  return item;
-}
-
-export type { DEFAULT_CATEGORIES };

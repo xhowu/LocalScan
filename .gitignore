@@ -1,4 +1,4 @@
-node_modules/
+﻿node_modules/
 dist/
 .DS_Store
 *.log
@@ -6,3 +6,4 @@ android-build/
 localscan/android/
 localscan/dist-android/
 localscan/node_modules/
+

@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>码上记 LocalScan · 产品技术手册</title>
+  <style>
+    :root {
+      --ink: #14181c;
+      --paper: #f3f0e8;
+      --seal: #b33a2f;
+      --mint: #2f8f66;
+      --amber: #b07a1a;
+      --muted: #6d736f;
+      --line: #e7e2d6;
+      --card: #ffffff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+      background: var(--paper);
+      color: #1a1e22;
+      line-height: 1.7;
+    }
+    .strip {
+      background: var(--ink);
+      color: #e8e6e0;
+      padding: 0.65rem 1.25rem;
+      font-size: 0.78rem;
+      letter-spacing: 0.06em;
+    }
+    .strip b { color: var(--seal); font-family: Consolas, monospace; }
+    header.hero {
+      padding: 3rem 1.25rem 2rem;
+      max-width: 920px;
+      margin: 0 auto;
+    }
+    .eyebrow {
+      color: var(--seal);
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      margin: 0 0 0.5rem;
+    }
+    h1 {
+      margin: 0 0 0.75rem;
+      font-size: clamp(1.8rem, 4vw, 2.5rem);
+      letter-spacing: -0.02em;
+    }
+    .lead { color: var(--muted); margin: 0; max-width: 40rem; }
+    main {
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 0 1.25rem 4rem;
+    }
+    section {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 1.25rem 1.35rem;
+      margin-bottom: 1rem;
+    }
+    h2 {
+      margin: 0 0 0.75rem;
+      font-size: 1.15rem;
+      border-left: 3px solid var(--seal);
+      padding-left: 0.55rem;
+    }
+    h3 {
+      margin: 1rem 0 0.35rem;
+      font-size: 1rem;
+    }
+    ul { margin: 0.4rem 0 0; padding-left: 1.2rem; }
+    li { margin: 0.2rem 0; }
+    code, .mono {
+      font-family: Consolas, "Cascadia Code", monospace;
+      font-size: 0.9em;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 0.5rem;
+      font-size: 0.92rem;
+    }
+    th, td {
+      border: 1px solid var(--line);
+      padding: 0.5rem 0.65rem;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { background: #ebe7dc; font-weight: 700; }
+    .tag {
+      display: inline-block;
+      padding: 0.12rem 0.5rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      margin-right: 0.25rem;
+    }
+    .tag.seal { background: rgba(179,58,47,.12); color: var(--seal); }
+    .tag.mint { background: rgba(47,143,102,.12); color: var(--mint); }
+    .tag.amber { background: rgba(176,122,26,.14); color: var(--amber); }
+    .muted { color: var(--muted); font-size: 0.85rem; }
+    footer {
+      text-align: center;
+      padding: 1.5rem 1rem 2.5rem;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+    footer a { color: var(--seal); font-weight: 600; }
+    @media (max-width: 560px) {
+      table, thead, tbody, th, td, tr { display: block; }
+      th { display: none; }
+      td { border-top: 0; }
+      td::before {
+        content: attr(data-l) "：";
+        font-weight: 700;
+        color: var(--muted);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="strip">LOCALSCAN · PRODUCT TECHNICAL MANUAL · <b>v1.4.0</b> · 2026-09-12</div>
+
+  <header class="hero">
+    <p class="eyebrow">产品技术手册</p>
+    <h1>码上记 LocalScan</h1>
+    <p class="lead">
+      一款注重隐私、无需账号与云端的本地物品 / 库存管理工具。扫码建档、状态跟踪、导出备份与多设备点对点同步，数据默认留在本机。
+    </p>
+  </header>
+
+  <main>
+    <section>
+      <h2>产品定位</h2>
+      <p>
+        面向需要清晰掌握物品归属与数量、同时不愿把数据交给第三方的个人与小团队。
+        产品以<strong>「本地存储」为默认状态</strong>，以<strong>「主动导出 / 同步」为可选扩展</strong>。
+      </p>
+      <p>
+        <span class="tag seal">无账号</span>
+        <span class="tag seal">不强制联网</span>
+        <span class="tag mint">本机数据</span>
+        <span class="tag amber">点对点可选</span>
+      </p>
+      <h3>典型场景</h3>
+      <ul>
+        <li>个人数码 / 工具箱、家庭物资与药品</li>
+        <li>小团队仓库盘点、工作室物料台账</li>
+        <li>需要临期 / 过期提醒的耗材与食品</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>功能说明（与 v1.4.0 实现一致）</h2>
+      <table>
+        <thead>
+          <tr><th>模块</th><th>能力</th><th>说明</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td data-l="模块">物品管理</td>
+            <td data-l="能力">CRUD、数量、图片</td>
+            <td data-l="说明">新建/编辑/删除；数量 ± 与键盘直改；图片压缩、删除、排序</td>
+          </tr>
+          <tr>
+            <td data-l="模块">扫码</td>
+            <td data-l="能力">相机 + 相册 + 手动</td>
+            <td data-l="说明">Android 使用 Google ML Kit；Web 兜底 zxing + jsQR；闪光灯；结果弹窗</td>
+          </tr>
+          <tr>
+            <td data-l="模块">多仓库</td>
+            <td data-l="能力">切换与隔离</td>
+            <td data-l="说明">左缘滑出侧滑；状态与物品页四格卡片同步；导出绑定当前仓</td>
+          </tr>
+          <tr>
+            <td data-l="模块">分类 / 位置</td>
+            <td data-l="能力">可管理维度</td>
+            <td data-l="说明">新建、改名、排序、删除；列表筛选并记忆</td>
+          </tr>
+          <tr>
+            <td data-l="模块">日期保质</td>
+            <td data-l="能力">截止 / 临期 / 过期</td>
+            <td data-l="说明">生产日期 + 保质期（月）自动算截止；临期阈值驱动统计与筛选</td>
+          </tr>
+          <tr>
+            <td data-l="模块">状态体系</td>
+            <td data-l="能力">可配置卡片</td>
+            <td data-l="说明">在库/低库存/零库存/临期/过期等；可隐藏排序；首页四格可选</td>
+          </tr>
+          <tr>
+            <td data-l="模块">导出</td>
+            <td data-l="能力">表格与归档</td>
+            <td data-l="说明">CSV / XLSX / 含图 ZIP；综合导出为单份 ZIP；Android 写入 Documents/LocalScan</td>
+          </tr>
+          <tr>
+            <td data-l="模块">同步 / 备份</td>
+            <td data-l="能力">P2P 与加密</td>
+            <td data-l="说明">JSON 同步包字段合并；AES-GCM 加密 .enc；局域网只读 HTML 面板</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="muted">说明：未实现「中国物品编码中心商品库查询」；扫码仅作本地物品标识绑定。</p>
+    </section>
+
+    <section>
+      <h2>状态与数值规则</h2>
+      <table>
+        <thead>
+          <tr><th>规则</th><th>定义</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td data-l="规则">截止日期</td>
+            <td data-l="定义">生产日期 + 保质期（月），按本地日历加月</td>
+          </tr>
+          <tr>
+            <td data-l="规则">在库</td>
+            <td data-l="定义">数量 &gt; 0</td>
+          </tr>
+          <tr>
+            <td data-l="规则">低库存</td>
+            <td data-l="定义">0 &lt; 数量 ≤ 低库存阈值</td>
+          </tr>
+          <tr>
+            <td data-l="规则">零库存</td>
+            <td data-l="定义">数量 = 0</td>
+          </tr>
+          <tr>
+            <td data-l="规则">临期</td>
+            <td data-l="定义">未过期，且 截止 − 今天 ≤ 临期阈值（月）</td>
+          </tr>
+          <tr>
+            <td data-l="规则">过期</td>
+            <td data-l="定义">截止日期 &lt; 今天 − 1 日（一日宽限）</td>
+          </tr>
+          <tr>
+            <td data-l="规则">同步合并</td>
+            <td data-l="定义">按 id / 条码匹配；较新 updatedAt 覆盖字段；version + 1；不改动其它仓库</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>技术架构</h2>
+      <ul>
+        <li><strong>前端</strong>：React 19 + TypeScript + Vite</li>
+        <li><strong>壳层</strong>：Capacitor 8 · Android WebView</li>
+        <li><strong>扫码</strong>：Google ML Kit（原生相机 / 相册）；Web 兜底 zxing + jsQR</li>
+        <li><strong>存储</strong>：localStorage JSON（items / warehouses / meta / images）</li>
+        <li><strong>导出</strong>：SheetJS xlsx · JSZip · AES-GCM 加密备份</li>
+      </ul>
+      <p class="muted">代码结构：约 5k 行源码；页面 UI 为主，其次数据层与壳层样式。App 内「关于」页含可交互饼图。</p>
+    </section>
+
+    <section>
+      <h2>安装与使用</h2>
+      <ul>
+        <li>安装 <code>LocalScan-debug.apk</code>（允许未知来源）</li>
+        <li>首次进入会生成示例仓库与物品，可在设置中清空</li>
+        <li>扫码需相机权限；无相机时可用相册识别或手动输入</li>
+        <li>导出文件位于系统「文档 / LocalScan」</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>版本与仓库</h2>
+      <p>App 当前版本 <span class="mono">v1.4.0</span>（versionCode 4）。</p>
+      <ul>
+        <li>设计说明：仓库根目录 <code>index.html</code></li>
+        <li>产品技术手册：本页 <code>product-manual.html</code></li>
+        <li>安装包：<code>releases/LocalScan-debug-v1.4.0.apk</code></li>
+        <li>源码：<code>localscan/</code></li>
+      </ul>
+      <p class="muted">作者 · xhowu · AI 工具 · Xiaomi MIMO · 以上文档由 AI 辅助生成并按实现核对</p>
+    </section>
+  </main>
+
+  <footer>
+    码上记 LocalScan · 数据默认不出设备<br />
+    <a href="https://github.com/xhowu/LocalScan">github.com/xhowu/LocalScan</a>
+  </footer>
+</body>
+</html>

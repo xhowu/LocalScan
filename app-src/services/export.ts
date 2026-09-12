@@ -3,7 +3,7 @@ import JSZip from 'jszip';
 import type { InventoryItem } from '../types';
 import { formatTime } from '../types';
 import { getImageDataUrl, allItemsIncludingDeleted } from '../db';
-import { downloadBlob, dateStamp } from '../lib/files';
+import { saveFile, dateStamp } from '../lib/files';
 
 function rowsFromItems(items: InventoryItem[]) {
   return items.map((i) => ({
@@ -23,7 +23,7 @@ function rowsFromItems(items: InventoryItem[]) {
   }));
 }
 
-export function exportCsv(items: InventoryItem[]): string {
+export async function exportCsv(items: InventoryItem[]): Promise<string> {
   const rows = rowsFromItems(items);
   const headers = Object.keys(rows[0] ?? { 名称: '' });
   const lines = [headers.join(',')];
@@ -38,23 +38,24 @@ export function exportCsv(items: InventoryItem[]): string {
     );
   }
   const filename = `localscan-${dateStamp()}.csv`;
-  downloadBlob(new Blob(['﻿' + lines.join('\n')], { type: 'text/csv;charset=utf-8' }), filename);
-  return filename;
+  return saveFile(
+    new Blob(['﻿' + lines.join('\n')], { type: 'text/csv;charset=utf-8' }),
+    filename,
+  );
 }
 
-export function exportXlsx(items: InventoryItem[]): string {
+export async function exportXlsx(items: InventoryItem[]): Promise<string> {
   const ws = XLSX.utils.json_to_sheet(rowsFromItems(items));
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, '库存');
   const out = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
   const filename = `localscan-${dateStamp()}.xlsx`;
-  downloadBlob(
+  return saveFile(
     new Blob([out], {
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     }),
     filename,
   );
-  return filename;
 }
 
 export async function exportZipWithImages(items: InventoryItem[]): Promise<string> {
@@ -65,7 +66,6 @@ export async function exportZipWithImages(items: InventoryItem[]): Promise<strin
   const xlsx = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
   zip.file('inventory.xlsx', xlsx);
   zip.file('inventory.json', JSON.stringify(items, null, 2));
-
   const imgFolder = zip.folder('images');
   for (const item of items) {
     for (const imageId of item.imageIds) {
@@ -78,11 +78,13 @@ export async function exportZipWithImages(items: InventoryItem[]): Promise<strin
   }
   const out = await zip.generateAsync({ type: 'blob' });
   const filename = `localscan-backup-${dateStamp()}.zip`;
-  downloadBlob(out, filename);
-  return filename;
+  return saveFile(out, filename);
 }
 
-export async function exportEncryptedBackup(items: InventoryItem[], passphrase: string): Promise<string> {
+export async function exportEncryptedBackup(
+  items: InventoryItem[],
+  passphrase: string,
+): Promise<string> {
   const payload = new TextEncoder().encode(
     JSON.stringify({ items, exportedAt: new Date().toISOString() }),
   );
@@ -109,11 +111,13 @@ export async function exportEncryptedBackup(items: InventoryItem[], passphrase: 
   pack.set(iv, 20);
   pack.set(new Uint8Array(cipher), 32);
   const filename = `localscan-backup-${dateStamp()}.enc`;
-  downloadBlob(new Blob([pack], { type: 'application/octet-stream' }), filename);
-  return filename;
+  return saveFile(new Blob([pack], { type: 'application/octet-stream' }), filename);
 }
 
-export async function importEncryptedBackup(file: File, passphrase: string): Promise<InventoryItem[]> {
+export async function importEncryptedBackup(
+  file: File,
+  passphrase: string,
+): Promise<InventoryItem[]> {
   const buf = new Uint8Array(await file.arrayBuffer());
   if (buf[0] !== 0x4c || buf[1] !== 0x53 || buf[2] !== 0x45 || buf[3] !== 0x4e) {
     throw new Error('不是有效的 localscan 加密备份');
@@ -144,7 +148,7 @@ export async function importEncryptedBackup(file: File, passphrase: string): Pro
   }
 }
 
-export function exportSyncFile(items: InventoryItem[]): string {
+export async function exportSyncFile(items: InventoryItem[]): Promise<string> {
   const payload = {
     kind: 'localscan-sync' as const,
     schema: 2,
@@ -152,8 +156,10 @@ export function exportSyncFile(items: InventoryItem[]): string {
     items,
   };
   const filename = `localscan-sync-${dateStamp()}.json`;
-  downloadBlob(new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }), filename);
-  return filename;
+  return saveFile(
+    new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }),
+    filename,
+  );
 }
 
 export async function parseSyncFile(file: File): Promise<InventoryItem[]> {
