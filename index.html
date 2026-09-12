@@ -3,639 +3,380 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>码上记 LocalScan · App 设计方案</title>
-  <meta name="description" content="码上记 (LocalScan) — 注重隐私、无需联网、支持多设备点对点同步的本地物品/库存管理工具设计方案" />
-  <link rel="stylesheet" href="styles.css" />
+  <meta name="description" content="码上记 LocalScan — 本地物品库存管理，扫码建档、临期跟踪、离线导出与点对点同步。" />
+  <title>码上记 LocalScan · 产品</title>
+  <style>
+    :root {
+      --ink: #14181c;
+      --paper: #f5f2ea;
+      --seal: #b33a2f;
+      --seal-soft: #f5e8e6;
+      --mint: #2f8f66;
+      --amber: #b07a1a;
+      --muted: #6d736f;
+      --line: #e2ddd0;
+      --card: #ffffff;
+      --radius: 16px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+      background: var(--paper);
+      color: #1a1e22;
+      line-height: 1.7;
+    }
+    a { color: var(--seal); text-decoration: none; font-weight: 600; }
+    .mono { font-family: Consolas, "Cascadia Code", monospace; }
+
+    /* nav */
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: 0.7rem 1.1rem;
+      background: rgba(245, 242, 234, 0.92);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--line);
+    }
+    .brand { display: flex; flex-direction: column; gap: 0.05rem; }
+    .brand span:first-child {
+      font-family: Consolas, monospace;
+      font-size: 0.68rem;
+      letter-spacing: 0.18em;
+      color: var(--seal);
+      font-weight: 700;
+    }
+    .brand strong { font-size: 1.05rem; letter-spacing: 0.04em; }
+    .nav-links { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+    .nav-links a {
+      padding: 0.4rem 0.75rem;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      color: #1a1e22;
+      border: 1px solid transparent;
+    }
+    .nav-links a:hover,
+    .nav-links a.active {
+      background: var(--seal-soft);
+      color: var(--seal);
+      border-color: color-mix(in srgb, var(--seal) 20%, transparent);
+    }
+
+    .wrap { max-width: 980px; margin: 0 auto; padding: 0 1.15rem 3.5rem; }
+
+    .hero {
+      padding: 2.75rem 1.15rem 1.75rem;
+      max-width: 980px;
+      margin: 0 auto;
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: var(--seal);
+      margin: 0 0 0.65rem;
+    }
+    .eyebrow::before {
+      content: "";
+      width: 0.45rem;
+      height: 0.45rem;
+      border-radius: 50%;
+      background: var(--seal);
+    }
+    h1 {
+      margin: 0 0 0.85rem;
+      font-size: clamp(2rem, 5vw, 2.85rem);
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+    }
+    .hero p {
+      margin: 0;
+      max-width: 40rem;
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+    .hero-actions { margin-top: 1.25rem; display: flex; gap: 0.6rem; flex-wrap: wrap; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      min-height: 44px;
+      padding: 0.55rem 1.1rem;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 0.92rem;
+      border: 1px solid transparent;
+    }
+    .btn-primary { background: var(--seal); color: #fff; }
+    .btn-ghost {
+      background: var(--card);
+      border-color: var(--line);
+      color: #1a1e22;
+    }
+
+    .stat-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.55rem;
+      margin: 1.5rem 0 0;
+    }
+    .stat {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 0.75rem 0.5rem;
+      text-align: center;
+    }
+    .stat b { display: block; font-size: 1.2rem; color: var(--seal); font-family: Consolas, monospace; }
+    .stat span { font-size: 0.78rem; color: var(--muted); }
+
+    section {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 1.35rem 1.4rem;
+      margin-bottom: 0.95rem;
+    }
+    h2 {
+      margin: 0 0 0.85rem;
+      font-size: 1.2rem;
+      padding-left: 0.55rem;
+      border-left: 3px solid var(--seal);
+    }
+    h3 {
+      margin: 1.05rem 0 0.35rem;
+      font-size: 1rem;
+    }
+    ul { margin: 0.35rem 0 0; padding-left: 1.15rem; }
+    li { margin: 0.22rem 0; }
+    p.muted { color: var(--muted); font-size: 0.88rem; }
+
+    .grid3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+    }
+    .tile {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 0.9rem;
+      background: linear-gradient(180deg, #fff, #faf8f2);
+    }
+    .tile h3 { margin: 0 0 0.35rem; font-size: 0.98rem; }
+    .tile p { margin: 0; font-size: 0.88rem; color: var(--muted); }
+    .tile .n {
+      font-family: Consolas, monospace;
+      color: var(--seal);
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.92rem;
+      margin-top: 0.4rem;
+    }
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 0.55rem 0.4rem;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { color: var(--muted); font-size: 0.78rem; font-weight: 700; }
+
+    .pill {
+      display: inline-block;
+      padding: 0.12rem 0.5rem;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      margin: 0 0.15rem 0.15rem 0;
+    }
+    .pill.seal { background: var(--seal-soft); color: var(--seal); }
+    .pill.mint { background: rgba(47,143,102,.12); color: var(--mint); }
+    .pill.amber { background: rgba(176,122,26,.14); color: var(--amber); }
+
+    .note {
+      margin-top: 1rem;
+      padding: 0.75rem 0.9rem;
+      border-radius: 10px;
+      background: var(--seal-soft);
+      color: var(--seal);
+      font-size: 0.88rem;
+    }
+
+    footer {
+      text-align: center;
+      padding: 1.25rem 1rem 2.25rem;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    @media (max-width: 720px) {
+      .stat-row { grid-template-columns: repeat(2, 1fr); }
+      .grid3 { grid-template-columns: 1fr; }
+      table, thead, tbody, tr, th, td { display: block; }
+      th { display: none; }
+      td { border-bottom: 0; padding: 0.25rem 0; }
+      td::before { content: attr(data-l) " · "; color: var(--muted); font-weight: 700; }
+      tr { border-bottom: 1px solid var(--line); padding: 0.45rem 0; display: block; }
+    }
+  </style>
 </head>
 <body>
-  <div class="grain" aria-hidden="true"></div>
+  <nav class="nav">
+    <div class="brand">
+      <span>LOCALSCAN</span>
+      <strong>码上记</strong>
+    </div>
+    <div class="nav-links">
+      <a href="./index.html" class="active">产品</a>
+      <a href="./design.html">设计方案</a>
+      <a href="#features">功能</a>
+      <a href="#rules">规则</a>
+      <a href="#tech">架构</a>
+    </div>
+  </nav>
 
-  <!-- Top instrument strip -->
-  <header class="strip">
-    <div class="strip-inner">
-      <span class="strip-mark">LOCALSCAN</span>
-      <span class="strip-sep" aria-hidden="true"></span>
-      <span class="strip-title">码上记 · App 设计方案</span>
-      <nav class="strip-nav" aria-label="站点导航">
-        <a href="./product-manual.html">产品</a>
-        <a href="#position">定位</a>
-        <a href="#features">功能</a>
-        <a href="#challenges">挑战</a>
-        <a href="#highlights">亮点</a>
-        <a href="#system">系统</a>
-      </nav>
+  <header class="hero">
+    <p class="eyebrow">LOCAL INVENTORY · PRIVACY FIRST</p>
+    <h1>码上记 LocalScan</h1>
+    <p>
+      本地物品与库存管理。扫码建档、状态跟踪、离线导出；数据默认留在设备里，
+      需要时再通过文件或点对点同步带走——不绑账号，不上云。
+    </p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="#features">了解功能</a>
+      <a class="btn btn-ghost" href="./releases/LocalScan-debug-v1.4.0.apk">下载 v1.4.0 APK</a>
+      <a class="btn btn-ghost" href="./design.html">设计方案</a>
+    </div>
+    <div class="stat-row">
+      <div class="stat"><b>0</b><span>账号 / 云端</span></div>
+      <div class="stat"><b>ML Kit</b><span>原生扫码</span></div>
+      <div class="stat"><b>4+</b><span>状态维度</span></div>
+      <div class="stat"><b>AES</b><span>加密备份</span></div>
     </div>
   </header>
 
-  <main>
-    <!-- Hero -->
-    <section class="hero" id="top">
-      <div class="hero-grid">
-        <div class="hero-copy">
-          <p class="eyebrow">
-            <span class="eyebrow-dot" aria-hidden="true"></span>
-            本地优先 · 离线可用 · 点对点同步
-          </p>
-          <h1 class="hero-title">
-            <span class="hero-cn">码上记</span>
-            <span class="hero-en">LocalScan</span>
-          </h1>
-          <p class="hero-lead">
-            一款注重隐私的本地物品 / 库存管理工具。<br />
-            数据留在设备里，需要时通过系统分享或局域网点对点同步——不上传云端，不依赖账号。
-          </p>
-          <div class="hero-meta">
-            <div class="meta-item">
-              <span class="meta-label">形态</span>
-              <span class="meta-value">移动 App · 本地存储</span>
-            </div>
-            <div class="meta-item">
-              <span class="meta-label">识别</span>
-              <span class="meta-value mono">1D / 2D Barcode</span>
-            </div>
-            <div class="meta-item">
-              <span class="meta-label">同步</span>
-              <span class="meta-value">P2P · 无云端</span>
-            </div>
-          </div>
-          <div class="hero-actions">
-            <a class="btn btn-primary" href="#features">查看核心功能</a>
-            <a class="btn btn-ghost" href="#challenges">挑战与方案</a>
-          </div>
-        </div>
-
-        <div class="hero-stage" aria-hidden="false">
-          <div class="phone phone-hero" role="img" aria-label="码上记库存列表界面示意">
-            <div class="phone-bezel">
-              <div class="phone-notch"></div>
-              <div class="phone-screen">
-                <div class="app-status">
-                  <span class="app-time mono">09:41</span>
-                  <span class="app-lock">本地</span>
-                </div>
-                <div class="app-header">
-                  <div>
-                    <p class="app-eyebrow">我的仓库</p>
-                    <h2 class="app-title">全部物品</h2>
-                  </div>
-                  <button class="app-scan-btn" type="button" tabindex="-1">
-                    <span class="scan-icon"></span>
-                  </button>
-                </div>
-                <div class="app-search">
-                  <span class="search-icon" aria-hidden="true"></span>
-                  <span>搜索名称 / 条码 / 备注</span>
-                </div>
-                <div class="app-stats">
-                  <div class="stat">
-                    <strong class="mono">128</strong>
-                    <span>在库</span>
-                  </div>
-                  <div class="stat">
-                    <strong class="mono">6</strong>
-                    <span>低库存</span>
-                  </div>
-                  <div class="stat">
-                    <strong class="mono">3</strong>
-                    <span>今日新增</span>
-                  </div>
-                </div>
-                <ul class="item-list">
-                  <li class="item">
-                    <div class="item-thumb t-a"></div>
-                    <div class="item-body">
-                      <div class="item-top">
-                        <strong>无线键盘 K3</strong>
-                        <span class="badge ok">12</span>
-                      </div>
-                      <p class="item-code mono">6901234567892</p>
-                    </div>
-                  </li>
-                  <li class="item">
-                    <div class="item-thumb t-b"></div>
-                    <div class="item-body">
-                      <div class="item-top">
-                        <strong>Type-C 数据线</strong>
-                        <span class="badge ok">48</span>
-                      </div>
-                      <p class="item-code mono">6923456789012</p>
-                    </div>
-                  </li>
-                  <li class="item">
-                    <div class="item-thumb t-c"></div>
-                    <div class="item-body">
-                      <div class="item-top">
-                        <strong>便携风扇</strong>
-                        <span class="badge warn">2</span>
-                      </div>
-                      <p class="item-code mono">6971234500123</p>
-                    </div>
-                  </li>
-                  <li class="item">
-                    <div class="item-thumb t-d"></div>
-                    <div class="item-body">
-                      <div class="item-top">
-                        <strong>收纳箱 · 中号</strong>
-                        <span class="badge ok">15</span>
-                      </div>
-                      <p class="item-code mono">QR-BOX-M-08</p>
-                    </div>
-                  </li>
-                </ul>
-                <div class="app-tabbar">
-                  <span class="tab active">物品</span>
-                  <span class="tab">扫描</span>
-                  <span class="tab">同步</span>
-                  <span class="tab">设置</span>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="hero-tag">
-            <p class="tag-label">设计原则</p>
-            <p class="tag-text">数据不出设备，除非你主动同步。</p>
-          </div>
-        </div>
-      </div>
-      <div class="barcode-strip" aria-hidden="true">
-        <svg class="barcode-svg" viewBox="0 0 1200 48" preserveAspectRatio="none">
-          <rect x="0" y="0" width="3" height="48"/><rect x="6" y="0" width="1" height="48"/><rect x="10" y="0" width="4" height="48"/><rect x="17" y="0" width="1" height="48"/><rect x="21" y="0" width="2" height="48"/><rect x="26" y="0" width="5" height="48"/><rect x="34" y="0" width="1" height="48"/><rect x="38" y="0" width="3" height="48"/><rect x="44" y="0" width="2" height="48"/><rect x="49" y="0" width="1" height="48"/><rect x="53" y="0" width="4" height="48"/><rect x="60" y="0" width="2" height="48"/><rect x="65" y="0" width="1" height="48"/><rect x="69" y="0" width="5" height="48"/><rect x="77" y="0" width="2" height="48"/><rect x="82" y="0" width="3" height="48"/><rect x="88" y="0" width="1" height="48"/><rect x="92" y="0" width="4" height="48"/><rect x="99" y="0" width="1" height="48"/><rect x="103" y="0" width="2" height="48"/><rect x="108" y="0" width="3" height="48"/><rect x="114" y="0" width="1" height="48"/><rect x="118" y="0" width="5" height="48"/><rect x="126" y="0" width="2" height="48"/><rect x="131" y="0" width="1" height="48"/><rect x="135" y="0" width="4" height="48"/><rect x="142" y="0" width="2" height="48"/><rect x="147" y="0" width="3" height="48"/><rect x="153" y="0" width="1" height="48"/><rect x="157" y="0" width="2" height="48"/><rect x="162" y="0" width="5" height="48"/><rect x="170" y="0" width="1" height="48"/><rect x="174" y="0" width="3" height="48"/><rect x="180" y="0" width="2" height="48"/><rect x="185" y="0" width="4" height="48"/><rect x="192" y="0" width="1" height="48"/><rect x="196" y="0" width="2" height="48"/><rect x="201" y="0" width="3" height="48"/><rect x="207" y="0" width="1" height="48"/><rect x="211" y="0" width="5" height="48"/><rect x="219" y="0" width="2" height="48"/><rect x="224" y="0" width="1" height="48"/><rect x="228" y="0" width="4" height="48"/><rect x="235" y="0" width="3" height="48"/><rect x="241" y="0" width="2" height="48"/><rect x="246" y="0" width="1" height="48"/><rect x="250" y="0" width="5" height="48"/><rect x="258" y="0" width="2" height="48"/><rect x="263" y="0" width="3" height="48"/><rect x="269" y="0" width="1" height="48"/><rect x="273" y="0" width="4" height="48"/><rect x="280" y="0" width="2" height="48"/><rect x="285" y="0" width="1" height="48"/><rect x="289" y="0" width="3" height="48"/><rect x="295" y="0" width="5" height="48"/><rect x="303" y="0" width="1" height="48"/><rect x="307" y="0" width="2" height="48"/><rect x="312" y="0" width="4" height="48"/><rect x="319" y="0" width="1" height="48"/><rect x="323" y="0" width="3" height="48"/><rect x="329" y="0" width="2" height="48"/><rect x="334" y="0" width="5" height="48"/><rect x="342" y="0" width="1" height="48"/><rect x="346" y="0" width="2" height="48"/><rect x="351" y="0" width="3" height="48"/><rect x="357" y="0" width="1" height="48"/><rect x="361" y="0" width="4" height="48"/><rect x="368" y="0" width="2" height="48"/><rect x="373" y="0" width="1" height="48"/><rect x="377" y="0" width="5" height="48"/><rect x="385" y="0" width="3" height="48"/><rect x="391" y="0" width="2" height="48"/><rect x="396" y="0" width="1" height="48"/><rect x="400" y="0" width="4" height="48"/><rect x="407" y="0" width="2" height="48"/><rect x="412" y="0" width="3" height="48"/><rect x="418" y="0" width="1" height="48"/><rect x="422" y="0" width="5" height="48"/><rect x="430" y="0" width="2" height="48"/><rect x="435" y="0" width="1" height="48"/><rect x="439" y="0" width="3" height="48"/><rect x="445" y="0" width="4" height="48"/><rect x="452" y="0" width="2" height="48"/><rect x="457" y="0" width="1" height="48"/><rect x="461" y="0" width="5" height="48"/><rect x="469" y="0" width="3" height="48"/><rect x="475" y="0" width="2" height="48"/><rect x="480" y="0" width="1" height="48"/><rect x="484" y="0" width="4" height="48"/><rect x="491" y="0" width="2" height="48"/><rect x="496" y="0" width="3" height="48"/><rect x="502" y="0" width="1" height="48"/><rect x="506" y="0" width="5" height="48"/><rect x="514" y="0" width="2" height="48"/><rect x="519" y="0" width="1" height="48"/><rect x="523" y="0" width="4" height="48"/><rect x="530" y="0" width="3" height="48"/><rect x="536" y="0" width="2" height="48"/><rect x="541" y="0" width="1" height="48"/><rect x="545" y="0" width="5" height="48"/><rect x="553" y="0" width="2" height="48"/><rect x="558" y="0" width="3" height="48"/><rect x="564" y="0" width="1" height="48"/><rect x="568" y="0" width="4" height="48"/><rect x="575" y="0" width="2" height="48"/><rect x="580" y="0" width="1" height="48"/><rect x="584" y="0" width="3" height="48"/><rect x="590" y="0" width="5" height="48"/><rect x="598" y="0" width="1" height="48"/><rect x="602" y="0" width="2" height="48"/><rect x="607" y="0" width="4" height="48"/><rect x="614" y="0" width="1" height="48"/><rect x="618" y="0" width="3" height="48"/><rect x="624" y="0" width="2" height="48"/><rect x="629" y="0" width="5" height="48"/><rect x="637" y="0" width="1" height="48"/><rect x="641" y="0" width="2" height="48"/><rect x="646" y="0" width="3" height="48"/><rect x="652" y="0" width="1" height="48"/><rect x="656" y="0" width="4" height="48"/><rect x="663" y="0" width="2" height="48"/><rect x="668" y="0" width="1" height="48"/><rect x="672" y="0" width="5" height="48"/><rect x="680" y="0" width="3" height="48"/><rect x="686" y="0" width="2" height="48"/><rect x="691" y="0" width="1" height="48"/><rect x="695" y="0" width="4" height="48"/><rect x="702" y="0" width="2" height="48"/><rect x="707" y="0" width="3" height="48"/><rect x="713" y="0" width="1" height="48"/><rect x="717" y="0" width="5" height="48"/><rect x="725" y="0" width="2" height="48"/><rect x="730" y="0" width="1" height="48"/><rect x="734" y="0" width="3" height="48"/><rect x="740" y="0" width="4" height="48"/><rect x="747" y="0" width="2" height="48"/><rect x="752" y="0" width="1" height="48"/><rect x="756" y="0" width="5" height="48"/><rect x="764" y="0" width="3" height="48"/><rect x="770" y="0" width="2" height="48"/><rect x="775" y="0" width="1" height="48"/><rect x="779" y="0" width="4" height="48"/><rect x="786" y="0" width="2" height="48"/><rect x="791" y="0" width="3" height="48"/><rect x="797" y="0" width="1" height="48"/><rect x="801" y="0" width="5" height="48"/><rect x="809" y="0" width="2" height="48"/><rect x="814" y="0" width="1" height="48"/><rect x="818" y="0" width="4" height="48"/><rect x="825" y="0" width="3" height="48"/><rect x="831" y="0" width="2" height="48"/><rect x="836" y="0" width="1" height="48"/><rect x="840" y="0" width="5" height="48"/><rect x="848" y="0" width="2" height="48"/><rect x="853" y="0" width="3" height="48"/><rect x="859" y="0" width="1" height="48"/><rect x="863" y="0" width="4" height="48"/><rect x="870" y="0" width="2" height="48"/><rect x="875" y="0" width="1" height="48"/><rect x="879" y="0" width="3" height="48"/><rect x="885" y="0" width="5" height="48"/><rect x="893" y="0" width="1" height="48"/><rect x="897" y="0" width="2" height="48"/><rect x="902" y="0" width="4" height="48"/><rect x="909" y="0" width="1" height="48"/><rect x="913" y="0" width="3" height="48"/><rect x="919" y="0" width="2" height="48"/><rect x="924" y="0" width="5" height="48"/><rect x="932" y="0" width="1" height="48"/><rect x="936" y="0" width="2" height="48"/><rect x="941" y="0" width="3" height="48"/><rect x="947" y="0" width="1" height="48"/><rect x="951" y="0" width="4" height="48"/><rect x="958" y="0" width="2" height="48"/><rect x="963" y="0" width="1" height="48"/><rect x="967" y="0" width="5" height="48"/><rect x="975" y="0" width="3" height="48"/><rect x="981" y="0" width="2" height="48"/><rect x="986" y="0" width="1" height="48"/><rect x="990" y="0" width="4" height="48"/><rect x="997" y="0" width="2" height="48"/><rect x="1002" y="0" width="3" height="48"/><rect x="1008" y="0" width="1" height="48"/><rect x="1012" y="0" width="5" height="48"/><rect x="1020" y="0" width="2" height="48"/><rect x="1025" y="0" width="1" height="48"/><rect x="1029" y="0" width="4" height="48"/><rect x="1036" y="0" width="3" height="48"/><rect x="1042" y="0" width="2" height="48"/><rect x="1047" y="0" width="1" height="48"/><rect x="1051" y="0" width="5" height="48"/><rect x="1059" y="0" width="2" height="48"/><rect x="1064" y="0" width="3" height="48"/><rect x="1070" y="0" width="1" height="48"/><rect x="1074" y="0" width="4" height="48"/><rect x="1081" y="0" width="2" height="48"/><rect x="1086" y="0" width="1" height="48"/><rect x="1090" y="0" width="3" height="48"/><rect x="1096" y="0" width="5" height="48"/><rect x="1104" y="0" width="1" height="48"/><rect x="1108" y="0" width="2" height="48"/><rect x="1113" y="0" width="4" height="48"/><rect x="1120" y="0" width="1" height="48"/><rect x="1124" y="0" width="3" height="48"/><rect x="1130" y="0" width="2" height="48"/><rect x="1135" y="0" width="5" height="48"/><rect x="1143" y="0" width="1" height="48"/><rect x="1147" y="0" width="2" height="48"/><rect x="1152" y="0" width="3" height="48"/><rect x="1158" y="0" width="1" height="48"/><rect x="1162" y="0" width="4" height="48"/><rect x="1169" y="0" width="2" height="48"/><rect x="1174" y="0" width="1" height="48"/><rect x="1178" y="0" width="5" height="48"/><rect x="1186" y="0" width="3" height="48"/><rect x="1192" y="0" width="2" height="48"/><rect x="1197" y="0" width="3" height="48"/>
-        </svg>
+  <main class="wrap">
+    <section id="features">
+      <h2>核心能力</h2>
+      <div class="grid3">
+        <article class="tile">
+          <p class="n">01</p>
+          <h3>物品台账</h3>
+          <p>名称、条码、分类、位置、数量与财务信息；图片可删可排序；长按卡片快捷操作。</p>
+        </article>
+        <article class="tile">
+          <p class="n">02</p>
+          <h3>扫码建档</h3>
+          <p>Android 上 Google ML Kit 相机 / 相册识别；Web 兜底 zxing + jsQR；闪光灯与结果弹窗。</p>
+        </article>
+        <article class="tile">
+          <p class="n">03</p>
+          <h3>多仓库</h3>
+          <p>左缘滑出切换；首页状态卡片与仓库统计同步；导出与同步绑定当前仓库。</p>
+        </article>
+        <article class="tile">
+          <p class="n">04</p>
+          <h3>临期体系</h3>
+          <p>生产日期 + 保质期（月）自动算截止；临期阈值驱动在库 / 临期 / 过期统计。</p>
+        </article>
+        <article class="tile">
+          <p class="n">05</p>
+          <h3>可配置筛选</h3>
+          <p>分类 / 位置 / 状态多维筛选并记忆；状态卡片可排序、隐藏、恢复。</p>
+        </article>
+        <article class="tile">
+          <p class="n">06</p>
+          <h3>导出与同步</h3>
+          <p>CSV / XLSX / 含图 ZIP；JSON 同步包合并；AES-GCM 加密备份与局域网面板。</p>
+        </article>
       </div>
     </section>
 
-    <!-- Positioning -->
-    <section class="section paper" id="position">
-      <div class="section-inner">
-        <header class="section-head reveal">
-          <p class="section-index mono">01 / 定位</p>
-          <h2 class="section-title">把库存管理从云端收回到本地</h2>
-          <p class="section-desc">
-            码上记面向需要清楚掌握物品归属与数量、同时不愿把数据交给第三方的用户。
-            产品以「本地存储」为默认状态，以「点对点同步」为可选扩展。
-          </p>
-        </header>
-
-        <div class="pillars">
-          <article class="pillar reveal">
-            <div class="pillar-num mono">A</div>
-            <h3>隐私默认</h3>
-            <p>数据保存在本机。无需注册账号，不强制联网，不静默上传。</p>
-          </article>
-          <article class="pillar reveal">
-            <div class="pillar-num mono">B</div>
-            <h3>扫码驱动</h3>
-            <p>以条码为物品入口，自动校验重复，减少手工录入与串号。</p>
-          </article>
-          <article class="pillar reveal">
-            <div class="pillar-num mono">C</div>
-            <h3>设备协作</h3>
-            <p>手机、平板、电脑之间通过系统分享或局域网进行增量同步。</p>
-          </article>
-        </div>
-
-        <div class="audience reveal">
-          <p class="audience-label">适用场景</p>
-          <ul class="audience-list">
-            <li>个人数码 / 工具箱管理</li>
-            <li>小团队仓库盘点</li>
-            <li>工作室物料台账</li>
-            <li>家庭物资与药品备份</li>
-          </ul>
-        </div>
-      </div>
+    <section>
+      <h2>典型场景</h2>
+      <p>
+        <span class="pill seal">个人数码 / 工具箱</span>
+        <span class="pill seal">家庭物资与药品</span>
+        <span class="pill amber">耗材临期提醒</span>
+        <span class="pill mint">小团队仓库盘点</span>
+        <span class="pill mint">工作室物料台账</span>
+      </p>
+      <p class="muted">适合需要「一眼看清有多少、在哪里、是否临期」，又不愿把数据交给第三方的用户。</p>
     </section>
 
-    <!-- Features -->
-    <section class="section dark" id="features">
-      <div class="section-inner">
-        <header class="section-head reveal">
-          <p class="section-index mono">02 / 核心功能</p>
-          <h2 class="section-title">四条主链路，覆盖完整库存生命周期</h2>
-          <p class="section-desc">
-            从识别、建档、留存到迁移，每一步都保持本地可控，并用版本号支撑多设备一致性。
-          </p>
-        </header>
-
-        <div class="feature-layout">
-          <div class="feature-stack">
-            <article class="feature-row reveal">
-              <div class="feature-id mono">F-01</div>
-              <div class="feature-main">
-                <h3>扫码识别</h3>
-                <p>支持 1D 条形码与 2D 二维码。识别后自动比对本地库，检测重复条码并提示已有物品，避免重复建档。</p>
-                <ul class="feature-points">
-                  <li>相机实时取景识别</li>
-                  <li>重复条码拦截与跳转</li>
-                  <li>手动录入兜底</li>
-                </ul>
-              </div>
-              <div class="feature-side">
-                <div class="mini-ui scan-ui">
-                  <div class="scan-frame">
-                    <span class="corner c1"></span><span class="corner c2"></span>
-                    <span class="corner c3"></span><span class="corner c4"></span>
-                    <div class="scan-line"></div>
-                  </div>
-                  <p class="mini-caption mono">EAN-13 · 6901234567892</p>
-                  <p class="mini-hint">已存在该条码 · 无线键盘 K3</p>
-                </div>
-              </div>
-              <svg class="row-barcode" viewBox="0 0 280 20" preserveAspectRatio="none" aria-hidden="true">
-                <rect x="0" y="0" width="2" height="20"/><rect x="5" y="0" width="1" height="20"/><rect x="9" y="0" width="3" height="20"/><rect x="15" y="0" width="1" height="20"/><rect x="19" y="0" width="2" height="20"/><rect x="24" y="0" width="4" height="20"/><rect x="31" y="0" width="1" height="20"/><rect x="35" y="0" width="2" height="20"/><rect x="40" y="0" width="3" height="20"/><rect x="46" y="0" width="1" height="20"/><rect x="50" y="0" width="2" height="20"/><rect x="55" y="0" width="4" height="20"/><rect x="62" y="0" width="1" height="20"/><rect x="66" y="0" width="3" height="20"/><rect x="72" y="0" width="2" height="20"/><rect x="77" y="0" width="1" height="20"/><rect x="81" y="0" width="4" height="20"/><rect x="88" y="0" width="2" height="20"/><rect x="93" y="0" width="1" height="20"/><rect x="97" y="0" width="3" height="20"/><rect x="103" y="0" width="2" height="20"/><rect x="108" y="0" width="5" height="20"/><rect x="116" y="0" width="1" height="20"/><rect x="120" y="0" width="2" height="20"/><rect x="125" y="0" width="3" height="20"/><rect x="131" y="0" width="1" height="20"/><rect x="135" y="0" width="4" height="20"/><rect x="142" y="0" width="2" height="20"/><rect x="147" y="0" width="1" height="20"/><rect x="151" y="0" width="3" height="20"/><rect x="157" y="0" width="2" height="20"/><rect x="162" y="0" width="4" height="20"/><rect x="169" y="0" width="1" height="20"/><rect x="173" y="0" width="2" height="20"/><rect x="178" y="0" width="3" height="20"/><rect x="184" y="0" width="1" height="20"/><rect x="188" y="0" width="5" height="20"/><rect x="196" y="0" width="2" height="20"/><rect x="201" y="0" width="1" height="20"/><rect x="205" y="0" width="3" height="20"/><rect x="211" y="0" width="2" height="20"/><rect x="216" y="0" width="4" height="20"/><rect x="223" y="0" width="1" height="20"/><rect x="227" y="0" width="2" height="20"/><rect x="232" y="0" width="3" height="20"/><rect x="238" y="0" width="1" height="20"/><rect x="242" y="0" width="5" height="20"/><rect x="250" y="0" width="2" height="20"/><rect x="255" y="0" width="1" height="20"/><rect x="259" y="0" width="3" height="20"/><rect x="265" y="0" width="2" height="20"/><rect x="270" y="0" width="4" height="20"/><rect x="277" y="0" width="3" height="20"/>
-              </svg>
-            </article>
-
-            <article class="feature-row reveal">
-              <div class="feature-id mono">F-02</div>
-              <div class="feature-main">
-                <h3>物品管理</h3>
-                <p>一条物品记录覆盖基础信息、财务信息、库存时间与多媒体图片，形成可检索的完整台账。</p>
-                <ul class="feature-points">
-                  <li>名称 / 分类 / 备注 / 自定义字段</li>
-                  <li>单价、购入价、币种与流水备注</li>
-                  <li>入库、移库、出库时间戳</li>
-                  <li>现场拍照与相册导入</li>
-                </ul>
-              </div>
-              <div class="feature-side">
-                <div class="mini-ui form-ui">
-                  <div class="field"><span>名称</span><strong>便携风扇</strong></div>
-                  <div class="field"><span>数量</span><strong class="mono">2</strong></div>
-                  <div class="field"><span>购入价</span><strong class="mono">¥89.00</strong></div>
-                  <div class="field"><span>入库时间</span><strong class="mono">2026-09-08</strong></div>
-                  <div class="photo-row">
-                    <span class="ph"></span><span class="ph"></span><span class="ph add">+</span>
-                  </div>
-                </div>
-              </div>
-              <svg class="row-barcode" viewBox="0 0 280 20" preserveAspectRatio="none" aria-hidden="true">
-                <rect x="0" y="0" width="1" height="20"/><rect x="4" y="0" width="3" height="20"/><rect x="10" y="0" width="2" height="20"/><rect x="15" y="0" width="1" height="20"/><rect x="19" y="0" width="4" height="20"/><rect x="26" y="0" width="2" height="20"/><rect x="31" y="0" width="1" height="20"/><rect x="35" y="0" width="3" height="20"/><rect x="41" y="0" width="5" height="20"/><rect x="49" y="0" width="1" height="20"/><rect x="53" y="0" width="2" height="20"/><rect x="58" y="0" width="4" height="20"/><rect x="65" y="0" width="1" height="20"/><rect x="69" y="0" width="3" height="20"/><rect x="75" y="0" width="2" height="20"/><rect x="80" y="0" width="1" height="20"/><rect x="84" y="0" width="5" height="20"/><rect x="92" y="0" width="2" height="20"/><rect x="97" y="0" width="3" height="20"/><rect x="103" y="0" width="1" height="20"/><rect x="107" y="0" width="4" height="20"/><rect x="114" y="0" width="2" height="20"/><rect x="119" y="0" width="1" height="20"/><rect x="123" y="0" width="3" height="20"/><rect x="129" y="0" width="5" height="20"/><rect x="137" y="0" width="2" height="20"/><rect x="142" y="0" width="1" height="20"/><rect x="146" y="0" width="4" height="20"/><rect x="153" y="0" width="3" height="20"/><rect x="159" y="0" width="2" height="20"/><rect x="164" y="0" width="1" height="20"/><rect x="168" y="0" width="5" height="20"/><rect x="176" y="0" width="2" height="20"/><rect x="181" y="0" width="3" height="20"/><rect x="187" y="0" width="1" height="20"/><rect x="191" y="0" width="4" height="20"/><rect x="198" y="0" width="2" height="20"/><rect x="203" y="0" width="1" height="20"/><rect x="207" y="0" width="3" height="20"/><rect x="213" y="0" width="5" height="20"/><rect x="221" y="0" width="2" height="20"/><rect x="226" y="0" width="1" height="20"/><rect x="230" y="0" width="4" height="20"/><rect x="237" y="0" width="3" height="20"/><rect x="243" y="0" width="2" height="20"/><rect x="248" y="0" width="1" height="20"/><rect x="252" y="0" width="5" height="20"/><rect x="260" y="0" width="2" height="20"/><rect x="265" y="0" width="3" height="20"/><rect x="271" y="0" width="1" height="20"/><rect x="275" y="0" width="5" height="20"/>
-              </svg>
-            </article>
-
-            <article class="feature-row reveal">
-              <div class="feature-id mono">F-03</div>
-              <div class="feature-main">
-                <h3>数据导出</h3>
-                <p>导出不是附件功能，而是防丢与交接的一部分。支持表格交换与含图归档两种路径。</p>
-                <ul class="feature-points">
-                  <li><span class="mono">.xlsx</span> / <span class="mono">.csv</span> 结构化导出</li>
-                  <li>含图片的 <span class="mono">.zip</span> 压缩包</li>
-                  <li>可选字段筛选与时间范围</li>
-                </ul>
-              </div>
-              <div class="feature-side">
-                <div class="mini-ui export-ui">
-                  <div class="file-chip"><span class="ext xlsx">XLSX</span><span>库存总表.xlsx</span></div>
-                  <div class="file-chip"><span class="ext csv">CSV</span><span>低库存.csv</span></div>
-                  <div class="file-chip"><span class="ext zip">ZIP</span><span>备份含图.zip</span></div>
-                  <p class="mini-caption">导出后可交接、可归档、可再次导入。</p>
-                </div>
-              </div>
-              <svg class="row-barcode" viewBox="0 0 280 20" preserveAspectRatio="none" aria-hidden="true">
-                <rect x="0" y="0" width="2" height="20"/><rect x="5" y="0" width="1" height="20"/><rect x="9" y="0" width="4" height="20"/><rect x="16" y="0" width="2" height="20"/><rect x="21" y="0" width="3" height="20"/><rect x="27" y="0" width="1" height="20"/><rect x="31" y="0" width="5" height="20"/><rect x="39" y="0" width="2" height="20"/><rect x="44" y="0" width="1" height="20"/><rect x="48" y="0" width="3" height="20"/><rect x="54" y="0" width="4" height="20"/><rect x="61" y="0" width="2" height="20"/><rect x="66" y="0" width="1" height="20"/><rect x="70" y="0" width="5" height="20"/><rect x="78" y="0" width="3" height="20"/><rect x="84" y="0" width="2" height="20"/><rect x="89" y="0" width="1" height="20"/><rect x="93" y="0" width="4" height="20"/><rect x="100" y="0" width="2" height="20"/><rect x="105" y="0" width="3" height="20"/><rect x="111" y="0" width="1" height="20"/><rect x="115" y="0" width="5" height="20"/><rect x="123" y="0" width="2" height="20"/><rect x="128" y="0" width="1" height="20"/><rect x="132" y="0" width="4" height="20"/><rect x="139" y="0" width="3" height="20"/><rect x="145" y="0" width="2" height="20"/><rect x="150" y="0" width="1" height="20"/><rect x="154" y="0" width="5" height="20"/><rect x="162" y="0" width="2" height="20"/><rect x="167" y="0" width="3" height="20"/><rect x="173" y="0" width="1" height="20"/><rect x="177" y="0" width="4" height="20"/><rect x="184" y="0" width="2" height="20"/><rect x="189" y="0" width="1" height="20"/><rect x="193" y="0" width="3" height="20"/><rect x="199" y="0" width="5" height="20"/><rect x="207" y="0" width="1" height="20"/><rect x="211" y="0" width="2" height="20"/><rect x="216" y="0" width="4" height="20"/><rect x="223" y="0" width="1" height="20"/><rect x="227" y="0" width="3" height="20"/><rect x="233" y="0" width="2" height="20"/><rect x="238" y="0" width="5" height="20"/><rect x="246" y="0" width="1" height="20"/><rect x="250" y="0" width="2" height="20"/><rect x="255" y="0" width="3" height="20"/><rect x="261" y="0" width="1" height="20"/><rect x="265" y="0" width="4" height="20"/><rect x="272" y="0" width="2" height="20"/><rect x="277" y="0" width="3" height="20"/>
-              </svg>
-            </article>
-
-            <article class="feature-row reveal">
-              <div class="feature-id mono">F-04</div>
-              <div class="feature-main">
-                <h3>多设备同步</h3>
-                <p>同步走设备直连，而不是账号云端。系统分享适合小批量迁移，WiFi 直连 / 蓝牙适合同网环境批量对齐。</p>
-                <ul class="feature-points">
-                  <li>系统分享发送 / 接收数据包</li>
-                  <li>WiFi 直连与蓝牙通道</li>
-                  <li>同步前冲突预览</li>
-                </ul>
-              </div>
-              <div class="feature-side">
-                <div class="mini-ui sync-ui">
-                  <div class="device">手机 A</div>
-                  <div class="sync-link">
-                    <span class="pulse"></span>
-                    <span class="link-label mono">P2P</span>
-                  </div>
-                  <div class="device">手机 B</div>
-                  <p class="mini-caption">仅传输变更 · 本地合并</p>
-                </div>
-              </div>
-              <svg class="row-barcode" viewBox="0 0 280 20" preserveAspectRatio="none" aria-hidden="true">
-                <rect x="0" y="0" width="3" height="20"/><rect x="6" y="0" width="1" height="20"/><rect x="10" y="0" width="2" height="20"/><rect x="15" y="0" width="5" height="20"/><rect x="23" y="0" width="1" height="20"/><rect x="27" y="0" width="3" height="20"/><rect x="33" y="0" width="2" height="20"/><rect x="38" y="0" width="1" height="20"/><rect x="42" y="0" width="4" height="20"/><rect x="49" y="0" width="2" height="20"/><rect x="54" y="0" width="3" height="20"/><rect x="60" y="0" width="1" height="20"/><rect x="64" y="0" width="5" height="20"/><rect x="72" y="0" width="2" height="20"/><rect x="77" y="0" width="1" height="20"/><rect x="81" y="0" width="4" height="20"/><rect x="88" y="0" width="3" height="20"/><rect x="94" y="0" width="2" height="20"/><rect x="99" y="0" width="1" height="20"/><rect x="103" y="0" width="5" height="20"/><rect x="111" y="0" width="2" height="20"/><rect x="116" y="0" width="3" height="20"/><rect x="122" y="0" width="1" height="20"/><rect x="126" y="0" width="4" height="20"/><rect x="133" y="0" width="2" height="20"/><rect x="138" y="0" width="1" height="20"/><rect x="142" y="0" width="3" height="20"/><rect x="148" y="0" width="5" height="20"/><rect x="156" y="0" width="2" height="20"/><rect x="161" y="0" width="1" height="20"/><rect x="165" y="0" width="4" height="20"/><rect x="172" y="0" width="3" height="20"/><rect x="178" y="0" width="2" height="20"/><rect x="183" y="0" width="1" height="20"/><rect x="187" y="0" width="5" height="20"/><rect x="195" y="0" width="2" height="20"/><rect x="200" y="0" width="3" height="20"/><rect x="206" y="0" width="1" height="20"/><rect x="210" y="0" width="4" height="20"/><rect x="217" y="0" width="2" height="20"/><rect x="222" y="0" width="1" height="20"/><rect x="226" y="0" width="3" height="20"/><rect x="232" y="0" width="5" height="20"/><rect x="240" y="0" width="1" height="20"/><rect x="244" y="0" width="2" height="20"/><rect x="249" y="0" width="4" height="20"/><rect x="256" y="0" width="1" height="20"/><rect x="260" y="0" width="3" height="20"/><rect x="266" y="0" width="2" height="20"/><rect x="271" y="0" width="5" height="20"/><rect x="278" y="0" width="2" height="20"/>
-              </svg>
-            </article>
-          </div>
-
-          <aside class="phone-col reveal">
-            <div class="phone phone-sticky" role="img" aria-label="扫码与物品详情界面示意">
-              <div class="phone-bezel">
-                <div class="phone-notch"></div>
-                <div class="phone-screen scan-screen">
-                  <div class="app-status dark-status">
-                    <span class="app-time mono">09:41</span>
-                    <span class="app-lock">离线</span>
-                  </div>
-                  <p class="scan-title">扫描条码</p>
-                  <div class="scan-viewport">
-                    <div class="scan-frame big">
-                      <span class="corner c1"></span><span class="corner c2"></span>
-                      <span class="corner c3"></span><span class="corner c4"></span>
-                      <div class="scan-line slow"></div>
-                      <div class="fake-barcode"></div>
-                    </div>
-                  </div>
-                  <p class="scan-tip">将条码置于框内，自动识别</p>
-                  <div class="scan-result">
-                    <p class="result-label">识别结果</p>
-                    <p class="result-code mono">6901234567892</p>
-                    <p class="result-name">无线键盘 K3 · 库存 12</p>
-                    <div class="result-actions">
-                      <span class="r-btn">打开物品</span>
-                      <span class="r-btn primary">更新数量</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </aside>
-        </div>
-      </div>
+    <section id="rules">
+      <h2>状态与计算规则</h2>
+      <table>
+        <thead>
+          <tr><th>规则</th><th>定义</th></tr>
+        </thead>
+        <tbody>
+          <tr><td data-l="规则">截止日期</td><td data-l="定义">生产日期 + 保质期（月），按本地日历加月</td></tr>
+          <tr><td data-l="规则">在库</td><td data-l="定义">数量 &gt; 0</td></tr>
+          <tr><td data-l="规则">低库存</td><td data-l="定义">0 &lt; 数量 ≤ 低库存阈值</td></tr>
+          <tr><td data-l="规则">零库存</td><td data-l="定义">数量 = 0</td></tr>
+          <tr><td data-l="规则">临期</td><td data-l="定义">未过期，且 截止 − 今天 ≤ 临期阈值（月）</td></tr>
+          <tr><td data-l="规则">过期</td><td data-l="定义">截止日期 &lt; 今天 − 1 日（一日宽限）</td></tr>
+          <tr><td data-l="规则">同步合并</td><td data-l="定义">按 id / 条码匹配；较新 updatedAt 覆盖字段；version + 1</td></tr>
+        </tbody>
+      </table>
+      <div class="note">扫码只绑定「本地物品标识」，不做商品百科查询；未接入商品编码中心接口。</div>
     </section>
 
-    <!-- Challenges -->
-    <section class="section paper" id="challenges">
-      <div class="section-inner">
-        <header class="section-head reveal">
-          <p class="section-index mono">03 / 核心挑战与解决方案</p>
-          <h2 class="section-title">本地多端协作必须先解决三件事</h2>
-          <p class="section-desc">
-            没有中心服务器时，冲突、语义与存储体积会直接暴露在用户面前。方案选择以可预期、可解释为优先。
-          </p>
-        </header>
-
-        <div class="challenge-list">
-          <article class="challenge reveal">
-            <div class="challenge-head">
-              <span class="challenge-tag">挑战 01</span>
-              <h3>数据冲突</h3>
-            </div>
-            <p class="challenge-problem">
-              两台设备离线修改同一条物品的不同字段，再次同步时如何合并，而不是整条覆盖。
-            </p>
-            <div class="challenge-solution">
-              <p class="sol-label">解决方案</p>
-              <p>采用 <strong>时间戳机制 + 字段级合并</strong>。每个字段携带最后修改时间，合并时以最新时间戳为准；整条记录的 <span class="mono">version</span> 用于判断是否需要传输。</p>
-            </div>
-            <div class="merge-demo" aria-hidden="true">
-              <div class="merge-col">
-                <p class="merge-dev">设备 A</p>
-                <p><span>名称</span><b>无线键盘 K3</b></p>
-                <p class="hot"><span>数量</span><b>12 · 09:12</b></p>
-              </div>
-              <div class="merge-arrow">字段合并</div>
-              <div class="merge-col">
-                <p class="merge-dev">设备 B</p>
-                <p class="hot"><span>备注</span><b>已贴资产标 · 09:18</b></p>
-                <p><span>数量</span><b>10 · 08:40</b></p>
-              </div>
-              <div class="merge-result">
-                <p class="merge-dev">合并结果</p>
-                <p><span>数量</span><b>12</b></p>
-                <p><span>备注</span><b>已贴资产标</b></p>
-              </div>
-            </div>
-          </article>
-
-          <article class="challenge reveal">
-            <div class="challenge-head">
-              <span class="challenge-tag">挑战 02</span>
-              <h3>条码语义</h3>
-            </div>
-            <p class="challenge-problem">
-              用户容易误以为扫描条码即可自动获得商品名称、规格与价格。
-            </p>
-            <div class="challenge-solution">
-              <p class="sol-label">解决方案</p>
-              <p>明确产品语义为 <strong>自定义物品绑定工具</strong>，不是商品百科。扫描只负责生成稳定标识，商品信息由用户手动输入或从既有记录继承。文案与空状态同步说明这一点，避免预期落差。</p>
-            </div>
-            <div class="semantic-note">
-              <p><strong>扫描结果</strong> = 标识符</p>
-              <p class="muted">不自动联网查询商品库 · 不猜测名称与价格</p>
-            </div>
-          </article>
-
-          <article class="challenge reveal">
-            <div class="challenge-head">
-              <span class="challenge-tag">挑战 03</span>
-              <h3>图片存储</h3>
-            </div>
-            <p class="challenge-problem">
-              现场照片体积大，会导致本地库膨胀、同步包变慢、低配设备卡顿。
-            </p>
-            <div class="challenge-solution">
-              <p class="sol-label">解决方案</p>
-              <p>提供 <strong>图片压缩选项</strong>，默认将照片控制在 <span class="mono">1080p</span> / <span class="mono">500KB</span> 以内。用户可在设置中选择「原图保留」或「优先体积」。</p>
-            </div>
-            <div class="image-policy">
-              <div class="policy-item">
-                <span class="policy-k">分辨率上限</span>
-                <span class="policy-v mono">1080p</span>
-              </div>
-              <div class="policy-item">
-                <span class="policy-k">单张体积</span>
-                <span class="policy-v mono">≤ 500KB</span>
-              </div>
-              <div class="policy-item">
-                <span class="policy-k">策略</span>
-                <span class="policy-v">可切换原图</span>
-              </div>
-            </div>
-          </article>
-        </div>
-      </div>
+    <section id="tech">
+      <h2>技术架构</h2>
+      <table>
+        <thead>
+          <tr><th>层</th><th>选型</th><th>说明</th></tr>
+        </thead>
+        <tbody>
+          <tr><td data-l="层">前端</td><td data-l="选型">React 19 · TypeScript · Vite</td><td data-l="说明">单页壳 + 哈希路由，顶底栏固定</td></tr>
+          <tr><td data-l="层">壳层</td><td data-l="选型">Capacitor 8 · Android</td><td data-l="说明">系统栏同色、相机与文件写入</td></tr>
+          <tr><td data-l="层">扫码</td><td data-l="选型">Google ML Kit</td><td data-l="说明">原生相机 / 相册；Web 兜底 zxing + jsQR</td></tr>
+          <tr><td data-l="层">存储</td><td data-l="选型">localStorage JSON</td><td data-l="说明">仓库、物品、分类位置、筛选配置</td></tr>
+          <tr><td data-l="层">导出</td><td data-l="选型">SheetJS · JSZip · WebCrypto</td><td data-l="说明">表格 / 归档 / AES-GCM 加密备份</td></tr>
+        </tbody>
+      </table>
+      <p class="muted">App 内「关于」页含可点击的代码结构饼图；占比为源码行数粗估。</p>
     </section>
 
-    <!-- Highlights -->
-    <section class="section dark" id="highlights">
-      <div class="section-inner">
-        <header class="section-head reveal">
-          <p class="section-index mono">04 / 亮点功能</p>
-          <h2 class="section-title">三个让「本地」真正好用的扩展</h2>
-          <p class="section-desc">
-            增量同步控制成本，局域网面板提升批量效率，加密备份兜住最后一道防线。
-          </p>
-        </header>
-
-        <div class="highlights">
-          <article class="highlight reveal">
-            <div class="hl-top">
-              <span class="hl-num mono">H1</span>
-              <h3>增量同步</h3>
-            </div>
-            <p>仅传输 <span class="mono">version</span> 发生变化的数据。未改动条目不进入传输队列，降低电量、流量与等待时间。</p>
-            <div class="delta-viz">
-              <div class="delta-row">
-                <span class="d-label">全量</span>
-                <div class="d-bar full"><i></i></div>
-                <span class="d-num mono">128 items</span>
-              </div>
-              <div class="delta-row">
-                <span class="d-label">增量</span>
-                <div class="d-bar"><i></i></div>
-                <span class="d-num mono">6 items</span>
-              </div>
-            </div>
-          </article>
-
-          <article class="highlight reveal">
-            <div class="hl-top">
-              <span class="hl-num mono">H2</span>
-              <h3>局域网 Web 面板</h3>
-            </div>
-            <p>手机开启本地服务后，同一 WiFi 下电脑浏览器访问临时面板，适合批量改数量、打标签、导出。</p>
-            <div class="panel-mock">
-              <div class="panel-bar">
-                <span class="dot"></span><span class="dot"></span><span class="dot"></span>
-                <span class="panel-url mono">http://192.168.1.24:8787</span>
-              </div>
-              <div class="panel-body">
-                <div class="panel-line"><span>筛选</span><strong>分类：数码</strong></div>
-                <div class="panel-line"><span>操作</span><strong>批量 +1 / 导出 CSV</strong></div>
-                <div class="panel-line ok"><span>状态</span><strong>仅局域网可见</strong></div>
-              </div>
-            </div>
-          </article>
-
-          <article class="highlight reveal">
-            <div class="hl-top">
-              <span class="hl-num mono">H3</span>
-              <h3>防丢机制</h3>
-            </div>
-            <p>导出 <strong>加密备份文件</strong>，可在更换设备或系统重置后完整恢复。备份是你自己的保险柜钥匙。</p>
-            <div class="vault">
-              <div class="vault-lock" aria-hidden="true">
-                <svg viewBox="0 0 48 56" width="40" height="46">
-                  <rect x="8" y="24" width="32" height="26" rx="4" fill="none" stroke="currentColor" stroke-width="2"/>
-                  <path d="M16 24v-8a8 8 0 0 1 16 0v8" fill="none" stroke="currentColor" stroke-width="2"/>
-                  <circle cx="24" cy="37" r="3" fill="currentColor"/>
-                </svg>
-              </div>
-              <p class="vault-file mono">localscan-backup-20260910.enc</p>
-              <p class="vault-meta">AES · 口令保护 · 可异地保存</p>
-            </div>
-          </article>
-        </div>
-      </div>
+    <section>
+      <h2>安装与开始</h2>
+      <ul>
+        <li>下载 <a class="mono" href="./releases/LocalScan-debug-v1.4.0.apk">LocalScan-debug-v1.4.0.apk</a>，允许未知来源后安装</li>
+        <li>首次启动会写入示例仓库与物品，可在设置中一键清空</li>
+        <li>导出文件写入系统「文档 / LocalScan」</li>
+        <li>浏览器打开 <a href="./design.html">设计方案页</a> 可查看设计说明</li>
+      </ul>
     </section>
 
-    <!-- System / architecture -->
-    <section class="section paper" id="system">
-      <div class="section-inner">
-        <header class="section-head reveal">
-          <p class="section-index mono">05 / 系统视角</p>
-          <h2 class="section-title">数据如何在设备间流动</h2>
-          <p class="section-desc">
-            所有路径默认终止于本地。同步与导出是用户主动发起的动作，而不是后台常驻行为。
-          </p>
-        </header>
-
-        <div class="flow reveal">
-          <div class="flow-node">
-            <p class="flow-title">本机数据库</p>
-            <p class="flow-desc">物品 · 图片 · 版本号</p>
-          </div>
-          <div class="flow-edge">
-            <span>扫码 / 编辑</span>
-          </div>
-          <div class="flow-node accent">
-            <p class="flow-title">变更检测</p>
-            <p class="flow-desc">version bump</p>
-          </div>
-          <div class="flow-branch">
-            <div class="branch">
-              <div class="flow-edge"><span>用户发起</span></div>
-              <div class="flow-node">
-                <p class="flow-title">P2P 同步</p>
-                <p class="flow-desc">分享 / WiFi / 蓝牙</p>
-              </div>
-            </div>
-            <div class="branch">
-              <div class="flow-edge"><span>用户发起</span></div>
-              <div class="flow-node">
-                <p class="flow-title">导出备份</p>
-                <p class="flow-desc">xlsx / csv / zip / enc</p>
-              </div>
-            </div>
-            <div class="branch">
-              <div class="flow-edge"><span>同网可选</span></div>
-              <div class="flow-node">
-                <p class="flow-title">Web 面板</p>
-                <p class="flow-desc">批量操作 · 不出网</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="principles reveal">
-          <article class="principle">
-            <h3>可解释</h3>
-            <p>每次同步都能看到改了哪些字段、依据哪个时间戳。</p>
-          </article>
-          <article class="principle">
-            <h3>可回退</h3>
-            <p>加密备份与历史导出构成恢复路径，避免单点损坏。</p>
-          </article>
-          <article class="principle">
-            <h3>可离线</h3>
-            <p>除主动同步外，完整功能不依赖公网。</p>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <!-- Closing -->
-    <section class="closing" id="closing">
-      <div class="section-inner closing-inner reveal">
-        <p class="closing-eyebrow">设计立场</p>
-        <h2 class="closing-title">
-          库存工具可以很强，<br />也可以不窥探你的数据。
-        </h2>
-        <p class="closing-text">
-          码上记把「本地默认、按需同步」写进产品结构，而不是写进营销文案。
-        </p>
-        <div class="closing-meta">
-          <div>
-            <span class="meta-label">产品名</span>
-            <span class="meta-value">码上记</span>
-          </div>
-          <div>
-            <span class="meta-label">代号</span>
-            <span class="meta-value mono">LocalScan</span>
-          </div>
-          <div>
-            <span class="meta-label">文档</span>
-            <span class="meta-value">App 设计方案</span>
-          </div>
-        </div>
-      </div>
-      <div class="barcode-strip light" aria-hidden="true">
-        <svg class="barcode-svg" viewBox="0 0 1200 40" preserveAspectRatio="none">
-          <rect x="0" y="0" width="2" height="40"/><rect x="5" y="0" width="1" height="40"/><rect x="9" y="0" width="4" height="40"/><rect x="16" y="0" width="2" height="40"/><rect x="21" y="0" width="1" height="40"/><rect x="25" y="0" width="3" height="40"/><rect x="31" y="0" width="5" height="40"/><rect x="39" y="0" width="1" height="40"/><rect x="43" y="0" width="2" height="40"/><rect x="48" y="0" width="4" height="40"/><rect x="55" y="0" width="1" height="40"/><rect x="59" y="0" width="3" height="40"/><rect x="65" y="0" width="2" height="40"/><rect x="70" y="0" width="1" height="40"/><rect x="74" y="0" width="5" height="40"/><rect x="82" y="0" width="2" height="40"/><rect x="87" y="0" width="1" height="40"/><rect x="91" y="0" width="4" height="40"/><rect x="98" y="0" width="3" height="40"/><rect x="104" y="0" width="2" height="40"/><rect x="109" y="0" width="1" height="40"/><rect x="113" y="0" width="5" height="40"/><rect x="121" y="0" width="2" height="40"/><rect x="126" y="0" width="3" height="40"/><rect x="132" y="0" width="1" height="40"/><rect x="136" y="0" width="4" height="40"/><rect x="143" y="0" width="2" height="40"/><rect x="148" y="0" width="1" height="40"/><rect x="152" y="0" width="3" height="40"/><rect x="158" y="0" width="5" height="40"/><rect x="166" y="0" width="1" height="40"/><rect x="170" y="0" width="2" height="40"/><rect x="175" y="0" width="4" height="40"/><rect x="182" y="0" width="1" height="40"/><rect x="186" y="0" width="3" height="40"/><rect x="192" y="0" width="2" height="40"/><rect x="197" y="0" width="5" height="40"/><rect x="205" y="0" width="1" height="40"/><rect x="209" y="0" width="2" height="40"/><rect x="214" y="0" width="3" height="40"/><rect x="220" y="0" width="1" height="40"/><rect x="224" y="0" width="4" height="40"/><rect x="231" y="0" width="2" height="40"/><rect x="236" y="0" width="1" height="40"/><rect x="240" y="0" width="5" height="40"/><rect x="248" y="0" width="3" height="40"/><rect x="254" y="0" width="2" height="40"/><rect x="259" y="0" width="1" height="40"/><rect x="263" y="0" width="4" height="40"/><rect x="270" y="0" width="2" height="40"/><rect x="275" y="0" width="3" height="40"/><rect x="281" y="0" width="1" height="40"/><rect x="285" y="0" width="5" height="40"/><rect x="293" y="0" width="2" height="40"/><rect x="298" y="0" width="1" height="40"/><rect x="302" y="0" width="4" height="40"/><rect x="309" y="0" width="3" height="40"/><rect x="315" y="0" width="2" height="40"/><rect x="320" y="0" width="1" height="40"/><rect x="324" y="0" width="5" height="40"/><rect x="332" y="0" width="2" height="40"/><rect x="337" y="0" width="3" height="40"/><rect x="343" y="0" width="1" height="40"/><rect x="347" y="0" width="4" height="40"/><rect x="354" y="0" width="2" height="40"/><rect x="359" y="0" width="1" height="40"/><rect x="363" y="0" width="3" height="40"/><rect x="369" y="0" width="5" height="40"/><rect x="377" y="0" width="1" height="40"/><rect x="381" y="0" width="2" height="40"/><rect x="386" y="0" width="4" height="40"/><rect x="393" y="0" width="1" height="40"/><rect x="397" y="0" width="3" height="40"/><rect x="403" y="0" width="2" height="40"/><rect x="408" y="0" width="5" height="40"/><rect x="416" y="0" width="1" height="40"/><rect x="420" y="0" width="2" height="40"/><rect x="425" y="0" width="3" height="40"/><rect x="431" y="0" width="1" height="40"/><rect x="435" y="0" width="4" height="40"/><rect x="442" y="0" width="2" height="40"/><rect x="447" y="0" width="1" height="40"/><rect x="451" y="0" width="5" height="40"/><rect x="459" y="0" width="3" height="40"/><rect x="465" y="0" width="2" height="40"/><rect x="470" y="0" width="1" height="40"/><rect x="474" y="0" width="4" height="40"/><rect x="481" y="0" width="2" height="40"/><rect x="486" y="0" width="3" height="40"/><rect x="492" y="0" width="1" height="40"/><rect x="496" y="0" width="5" height="40"/><rect x="504" y="0" width="2" height="40"/><rect x="509" y="0" width="1" height="40"/><rect x="513" y="0" width="4" height="40"/><rect x="520" y="0" width="3" height="40"/><rect x="526" y="0" width="2" height="40"/><rect x="531" y="0" width="1" height="40"/><rect x="535" y="0" width="5" height="40"/><rect x="543" y="0" width="2" height="40"/><rect x="548" y="0" width="3" height="40"/><rect x="554" y="0" width="1" height="40"/><rect x="558" y="0" width="4" height="40"/><rect x="565" y="0" width="2" height="40"/><rect x="570" y="0" width="1" height="40"/><rect x="574" y="0" width="3" height="40"/><rect x="580" y="0" width="5" height="40"/><rect x="588" y="0" width="1" height="40"/><rect x="592" y="0" width="2" height="40"/><rect x="597" y="0" width="4" height="40"/><rect x="604" y="0" width="1" height="40"/><rect x="608" y="0" width="3" height="40"/><rect x="614" y="0" width="2" height="40"/><rect x="619" y="0" width="5" height="40"/><rect x="627" y="0" width="1" height="40"/><rect x="631" y="0" width="2" height="40"/><rect x="636" y="0" width="3" height="40"/><rect x="642" y="0" width="1" height="40"/><rect x="646" y="0" width="4" height="40"/><rect x="653" y="0" width="2" height="40"/><rect x="658" y="0" width="1" height="40"/><rect x="662" y="0" width="5" height="40"/><rect x="670" y="0" width="3" height="40"/><rect x="676" y="0" width="2" height="40"/><rect x="681" y="0" width="1" height="40"/><rect x="685" y="0" width="4" height="40"/><rect x="692" y="0" width="2" height="40"/><rect x="697" y="0" width="3" height="40"/><rect x="703" y="0" width="1" height="40"/><rect x="707" y="0" width="5" height="40"/><rect x="715" y="0" width="2" height="40"/><rect x="720" y="0" width="1" height="40"/><rect x="724" y="0" width="4" height="40"/><rect x="731" y="0" width="3" height="40"/><rect x="737" y="0" width="2" height="40"/><rect x="742" y="0" width="1" height="40"/><rect x="746" y="0" width="5" height="40"/><rect x="754" y="0" width="2" height="40"/><rect x="759" y="0" width="3" height="40"/><rect x="765" y="0" width="1" height="40"/><rect x="769" y="0" width="4" height="40"/><rect x="776" y="0" width="2" height="40"/><rect x="781" y="0" width="1" height="40"/><rect x="785" y="0" width="3" height="40"/><rect x="791" y="0" width="5" height="40"/><rect x="799" y="0" width="1" height="40"/><rect x="803" y="0" width="2" height="40"/><rect x="808" y="0" width="4" height="40"/><rect x="815" y="0" width="1" height="40"/><rect x="819" y="0" width="3" height="40"/><rect x="825" y="0" width="2" height="40"/><rect x="830" y="0" width="5" height="40"/><rect x="838" y="0" width="1" height="40"/><rect x="842" y="0" width="2" height="40"/><rect x="847" y="0" width="3" height="40"/><rect x="853" y="0" width="1" height="40"/><rect x="857" y="0" width="4" height="40"/><rect x="864" y="0" width="2" height="40"/><rect x="869" y="0" width="1" height="40"/><rect x="873" y="0" width="5" height="40"/><rect x="881" y="0" width="3" height="40"/><rect x="887" y="0" width="2" height="40"/><rect x="892" y="0" width="1" height="40"/><rect x="896" y="0" width="4" height="40"/><rect x="903" y="0" width="2" height="40"/><rect x="908" y="0" width="3" height="40"/><rect x="914" y="0" width="1" height="40"/><rect x="918" y="0" width="5" height="40"/><rect x="926" y="0" width="2" height="40"/><rect x="931" y="0" width="1" height="40"/><rect x="935" y="0" width="4" height="40"/><rect x="942" y="0" width="3" height="40"/><rect x="948" y="0" width="2" height="40"/><rect x="953" y="0" width="1" height="40"/><rect x="957" y="0" width="5" height="40"/><rect x="965" y="0" width="2" height="40"/><rect x="970" y="0" width="3" height="40"/><rect x="976" y="0" width="1" height="40"/><rect x="980" y="0" width="4" height="40"/><rect x="987" y="0" width="2" height="40"/><rect x="992" y="0" width="1" height="40"/><rect x="996" y="0" width="3" height="40"/><rect x="1002" y="0" width="5" height="40"/><rect x="1010" y="0" width="1" height="40"/><rect x="1014" y="0" width="2" height="40"/><rect x="1019" y="0" width="4" height="40"/><rect x="1026" y="0" width="1" height="40"/><rect x="1030" y="0" width="3" height="40"/><rect x="1036" y="0" width="2" height="40"/><rect x="1041" y="0" width="5" height="40"/><rect x="1049" y="0" width="1" height="40"/><rect x="1053" y="0" width="2" height="40"/><rect x="1058" y="0" width="3" height="40"/><rect x="1064" y="0" width="1" height="40"/><rect x="1068" y="0" width="4" height="40"/><rect x="1075" y="0" width="2" height="40"/><rect x="1080" y="0" width="1" height="40"/><rect x="1084" y="0" width="5" height="40"/><rect x="1092" y="0" width="3" height="40"/><rect x="1098" y="0" width="2" height="40"/><rect x="1103" y="0" width="1" height="40"/><rect x="1107" y="0" width="4" height="40"/><rect x="1114" y="0" width="2" height="40"/><rect x="1119" y="0" width="3" height="40"/><rect x="1125" y="0" width="1" height="40"/><rect x="1129" y="0" width="5" height="40"/><rect x="1137" y="0" width="2" height="40"/><rect x="1142" y="0" width="1" height="40"/><rect x="1146" y="0" width="4" height="40"/><rect x="1153" y="0" width="3" height="40"/><rect x="1159" y="0" width="2" height="40"/><rect x="1164" y="0" width="1" height="40"/><rect x="1168" y="0" width="5" height="40"/><rect x="1176" y="0" width="2" height="40"/><rect x="1181" y="0" width="3" height="40"/><rect x="1187" y="0" width="1" height="40"/><rect x="1191" y="0" width="4" height="40"/><rect x="1197" y="0" width="3" height="40"/>
-        </svg>
-      </div>
+    <section>
+      <h2>版本</h2>
+      <p>
+        当前发布 <strong class="mono">v1.4.0</strong>
+        <span class="pill mint">versionCode 4</span>
+        <span class="pill amber">2026-09-12</span>
+      </p>
+      <p class="muted">完整更新日志见 App「设置 → 版本」或仓库 README。</p>
     </section>
   </main>
 
-  <footer class="footer">
-    <p>码上记 LocalScan · 一站两页</p>
-    <p class="mono">
-      <a href="./product-manual.html">产品页</a>
-      ·
-      <a href="./releases/LocalScan-debug-v1.4.0.apk">下载 APK</a>
-      · v1.4.0
-    </p>
+  <footer>
+    码上记 LocalScan · 数据默认不出设备<br />
+    作者 xhowu · AI 工具 Xiaomi MIMO<br />
+    <a href="https://github.com/xhowu/LocalScan">github.com/xhowu/LocalScan</a>
   </footer>
-
-  <script src="app.js"></script>
 </body>
 </html>
