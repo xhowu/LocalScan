@@ -1,382 +1,1324 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="码上记 LocalScan — 本地物品库存管理，扫码建档、临期跟踪、离线导出与点对点同步。" />
-  <title>码上记 LocalScan · 产品</title>
-  <style>
-    :root {
-      --ink: #14181c;
-      --paper: #f5f2ea;
-      --seal: #b33a2f;
-      --seal-soft: #f5e8e6;
-      --mint: #2f8f66;
-      --amber: #b07a1a;
-      --muted: #6d736f;
-      --line: #e2ddd0;
-      --card: #ffffff;
-      --radius: 16px;
-    }
-    * { box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
-    body {
-      margin: 0;
-      font-family: "Segoe UI", "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
-      background: var(--paper);
-      color: #1a1e22;
-      line-height: 1.7;
-    }
-    a { color: var(--seal); text-decoration: none; font-weight: 600; }
-    .mono { font-family: Consolas, "Cascadia Code", monospace; }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="description" content="码上记 LocalScan — 本地物品库存管理，扫码建档、批次临期、离线导出与点对点同步。数据默认不出设备。" />
+<title>码上记『LocalScan』</title>
+<style>
+  :root {
+    --bg: #f3f0e8; --bg-2: #faf9f4; --card: #ffffff; --ink: #14181c; --text: #1a1e22;
+    --muted: #6d736f; --line: #e2ddd0; --seal: #b33a2f; --seal-soft: rgba(179,58,47,.1);
+    --mint: #2f8f66; --amber: #b07a1a; --glass: rgba(243,240,232,.72); --glass-line: rgba(20,24,28,.08);
+    --shadow: 0 10px 30px rgba(20,24,28,.09); --radius: 16px;
+  }
+  html[data-theme="dark"] {
+    --bg: #303030; --bg-2: #262626; --card: #1f1f1f; --ink: #e8e6e0; --text: #e8e6e0;
+    --muted: #9aa3a8; --line: rgba(255,255,255,.12); --seal: #e07064; --seal-soft: rgba(224,112,100,.16);
+    --mint: #5ecf98; --amber: #e0b45e; --glass: rgba(38,35,32,.78); --glass-line: rgba(255,255,255,.1);
+    --shadow: 0 10px 30px rgba(0,0,0,.4);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; font-family: "Segoe UI", "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.75; transition: background .3s, color .3s;
+    cursor: default; }
+  h1, h2, h3, h4, p, li, td, th, blockquote, figcaption, dt, dd { cursor: default; }
+  a { color: var(--seal); text-decoration: none; font-weight: 600; }
+  .mono { font-family: Consolas, "Cascadia Code", ui-monospace, monospace; }
+  .muted { color: var(--muted); }
+  ::selection { background: var(--seal-soft); }
 
-    /* nav */
-    .nav {
-      position: sticky;
-      top: 0;
-      z-index: 20;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 0.75rem;
-      padding: 0.7rem 1.1rem;
-      background: rgba(245, 242, 234, 0.92);
-      backdrop-filter: blur(14px);
-      border-bottom: 1px solid var(--line);
-    }
-    .brand { display: flex; flex-direction: column; gap: 0.05rem; }
-    .brand span:first-child {
-      font-family: Consolas, monospace;
-      font-size: 0.68rem;
-      letter-spacing: 0.18em;
-      color: var(--seal);
-      font-weight: 700;
-    }
-    .brand strong { font-size: 1.05rem; letter-spacing: 0.04em; }
-    .nav-links { display: flex; gap: 0.35rem; flex-wrap: wrap; }
-    .nav-links a {
-      padding: 0.4rem 0.75rem;
-      border-radius: 999px;
-      font-size: 0.85rem;
-      color: #1a1e22;
-      border: 1px solid transparent;
-    }
-    .nav-links a:hover,
-    .nav-links a.active {
-      background: var(--seal-soft);
-      color: var(--seal);
-      border-color: color-mix(in srgb, var(--seal) 20%, transparent);
-    }
+  /* ============ 顶栏（毛玻璃，来自 design.html strip） ============ */
+  .topbar { position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: var(--glass); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--glass-line); }
+  .topbar-in { max-width: 1200px; margin: 0 auto; padding: 0.55rem 1.1rem;
+    display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 0.6rem; }
+  .brand { display: inline-flex; align-items: center; gap: 0.6rem; cursor: pointer;
+    background: none; border: none; font: inherit; color: var(--text); padding: 0.15rem 0.3rem; border-radius: 10px; }
+  .brand img { width: 34px; height: 34px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,.12); }
+  .brand .bt { display: flex; flex-direction: column; line-height: 1.15; text-align: left; }
+  .brand .bt .en { font-family: Consolas, monospace; font-size: 0.62rem; letter-spacing: 0.22em;
+    color: var(--seal); font-weight: 700; }
+  .brand .bt .cn { font-size: 1.02rem; font-weight: 700; letter-spacing: 0.04em; }
+  .nav-mid { display: flex; gap: 0.15rem; justify-content: center; align-items: center; }
+  .nav-right { display: flex; gap: 0.15rem; justify-content: flex-end; align-items: center; }
+  .nav-item { position: relative; }
+  .nav-btn { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.42rem 0.85rem;
+    border-radius: 999px; font-size: 0.9rem; font-weight: 600; color: var(--text);
+    background: none; border: 1px solid transparent; cursor: pointer; font-family: inherit; white-space: nowrap; }
+  .nav-btn:hover { background: var(--seal-soft); color: var(--seal); }
+  .nav-btn.active { background: var(--seal); color: #fff; }
+  .nav-btn .chev { display: inline-block; width: 8px; height: 8px; flex: 0 0 auto;
+    border-right: 2px solid currentColor; border-bottom: 2px solid currentColor;
+    transform: rotate(45deg); transform-origin: 50% 50%; transition: transform .28s ease;
+    margin: -3px 0 0 3px; }
+  .nav-item.open > .nav-btn .chev { transform: rotate(225deg); margin-top: 3px; }
+  .nav-item.open > .nav-btn { background: var(--seal-soft); color: var(--seal); }
+  .dropdown { position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%) translateY(-6px);
+    min-width: 190px; background: var(--glass); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+    border: 1px solid var(--glass-line); border-radius: 14px; box-shadow: var(--shadow);
+    padding: 0.4rem; opacity: 0; visibility: hidden; transition: opacity .22s, transform .22s, visibility .22s; }
+  .nav-item.open > .dropdown { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+  .dropdown button, .dropdown a { display: flex; width: 100%; align-items: center; justify-content: space-between;
+    gap: 0.6rem; padding: 0.55rem 0.8rem; border: none; border-radius: 10px; background: none;
+    font: inherit; font-size: 0.9rem; font-weight: 600; color: var(--text); cursor: pointer; text-align: left; }
+  .dropdown button:hover, .dropdown a:hover { background: var(--seal-soft); color: var(--seal); }
+  .dropdown .sub { font-size: 0.72rem; color: var(--muted); font-weight: 500; }
+  /* 全页模糊遮罩：展开有内容的下拉时盖住页面（顶栏保持清晰，QQ 同款） */
+  #dropMask { position: fixed; inset: 0; z-index: 90; background: rgba(20, 24, 28, 0.16);
+    backdrop-filter: blur(9px); -webkit-backdrop-filter: blur(9px); pointer-events: none;
+    opacity: 0; visibility: hidden; transition: opacity .25s, visibility .25s; }
+  #dropMask.on { opacity: 1; visibility: visible; }
+  .theme-btn .icon { width: 17px; height: 17px; display: block; }
+  .theme-btn .icon.sun { display: none; }
+  html[data-theme="dark"] .theme-btn .icon.sun { display: block; }
+  html[data-theme="dark"] .theme-btn .icon.moon { display: none; }
 
-    .wrap { max-width: 980px; margin: 0 auto; padding: 0 1.15rem 3.5rem; }
+  /* ============ 视图 ============ */
+  main { padding-top: 58px; }
+  .view { display: none; min-height: calc(100vh - 58px); }
+  .view.on { display: block; animation: vin .3s ease; }
+  @keyframes vin { from { opacity: 0; transform: translateY(8px); } }
 
-    .hero {
-      padding: 2.75rem 1.15rem 1.75rem;
-      max-width: 980px;
-      margin: 0 auto;
-    }
-    .eyebrow {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      font-size: 0.75rem;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      color: var(--seal);
-      margin: 0 0 0.65rem;
-    }
-    .eyebrow::before {
-      content: "";
-      width: 0.45rem;
-      height: 0.45rem;
-      border-radius: 50%;
-      background: var(--seal);
-    }
-    h1 {
-      margin: 0 0 0.85rem;
-      font-size: clamp(2rem, 5vw, 2.85rem);
-      letter-spacing: -0.02em;
-      line-height: 1.15;
-    }
-    .hero p {
-      margin: 0;
-      max-width: 40rem;
-      color: var(--muted);
-      font-size: 1.05rem;
-    }
-    .hero-actions { margin-top: 1.25rem; display: flex; gap: 0.6rem; flex-wrap: wrap; }
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      min-height: 44px;
-      padding: 0.55rem 1.1rem;
-      border-radius: 999px;
-      font-weight: 700;
-      font-size: 0.92rem;
-      border: 1px solid transparent;
-    }
-    .btn-primary { background: var(--seal); color: #fff; }
-    .btn-ghost {
-      background: var(--card);
-      border-color: var(--line);
-      color: #1a1e22;
-    }
+  /* ============ 首页 Hero：App 底色 + 光栅 + 透镜 ============ */
+  .hero { position: relative; overflow: hidden; min-height: calc(100vh - 58px);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: linear-gradient(160deg, var(--bg-2) 0%, var(--bg) 55%, var(--bg) 100%); }
+  .hero .grating { position: absolute; inset: -40px; pointer-events: none;
+    background: repeating-linear-gradient(94deg, rgba(20,24,28,.035) 0 2px, transparent 2px 7px);
+    mix-blend-mode: multiply; animation: grating 26s linear infinite; }
+  html[data-theme="dark"] .hero .grating {
+    background: repeating-linear-gradient(94deg, rgba(255,255,255,.045) 0 2px, transparent 2px 7px);
+    mix-blend-mode: screen; }
+  @keyframes grating { from { transform: translateX(0); } to { transform: translateX(84px); } }
+  .hero-in { position: relative; text-align: center; padding: 4rem 1.2rem 3rem; }
+  .hero .eyebrow { display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.78rem; font-weight: 700;
+    letter-spacing: 0.16em; color: var(--seal); margin: 0 0 1.1rem; font-family: Consolas, monospace; }
+  .hero .eyebrow::before, .hero .eyebrow::after { content: ""; width: 8px; height: 1.5px; background: var(--seal); opacity: .6; }
+  .hero h1 { margin: 0 0 0.9rem; font-size: clamp(2.3rem, 7vw, 4.2rem); letter-spacing: 0.02em; line-height: 1.12; font-weight: 800; }
+  .hero h1 .lm { color: var(--seal); }
+  .hero .tagline { margin: 0 auto; max-width: 34rem; color: var(--muted); font-size: 1.05rem; }
+  .dl-caps { margin-top: 2.4rem; display: flex; gap: 1.4rem; justify-content: center; flex-wrap: wrap; }
+  .dl-cap { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
+  .cap-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.85rem 2.1rem;
+    border-radius: 999px; border: 1.5px solid var(--ink); background: transparent; color: var(--ink);
+    font-size: 1.02rem; font-weight: 700; cursor: pointer; font-family: inherit;
+    transition: background .25s, color .25s, transform .25s, box-shadow .25s; position: relative; }
+  .cap-btn:hover { background: var(--seal); border-color: var(--seal); color: #fff; transform: translateY(-2px); box-shadow: 0 10px 26px var(--seal-soft); }
+  /* 下标箭头：初始朝右（不 hover 时），悬停展开时转向下并翻转，中心点在图标正中 */
+  .cap-btn .cap-ico { width: 9px; height: 9px; flex: 0 0 auto; border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor; transform: rotate(-45deg); transform-origin: 50% 50%;
+    transition: transform .28s ease; margin: -2px 0 0 2px; }
+  .cap-item.open .cap-btn .cap-ico { transform: rotate(225deg); margin: 2px 0 0 2px; }
+  .cap-item.open .cap-btn { background: var(--seal); border-color: var(--seal); color: #fff; }
+  /* v1.10.0 多包下载面板：悬停后从胶囊右侧弹出（两列 离线/联网 × 4 行 ABI） */
+  .cap-item { position: relative; }
+  .cap-panel { position: absolute; top: 50%; left: calc(100% + 16px);
+    transform: translateY(-50%) translateX(-8px); display: grid; grid-template-columns: 1fr 1fr;
+    gap: 0.15rem 0.5rem; background: var(--glass); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+    border: 1px solid var(--glass-line); border-radius: 14px; box-shadow: var(--shadow);
+    padding: 0.7rem; opacity: 0; visibility: hidden; transition: opacity .22s, transform .22s, visibility .22s;
+    z-index: 5; min-width: 430px; }
+  .cap-item.open .cap-panel { opacity: 1; visibility: visible; transform: translateY(-50%) translateX(0); }
+  .cap-col-title { font-family: Consolas, monospace; font-size: 0.7rem; letter-spacing: 0.16em;
+    color: var(--muted); padding: 0.25rem 0.6rem 0.35rem; }
+  .cap-link { display: flex; align-items: center; justify-content: space-between; gap: 0.8rem;
+    padding: 0.5rem 0.7rem; border-radius: 9px; color: var(--text); font-weight: 600; font-size: 0.87rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--muted) 22%, transparent); }
+  .cap-link:hover { background: var(--seal-soft); color: var(--seal); border-radius: 9px; }
+  .cap-panel .cap-link:nth-last-child(-n+2) { border-bottom: none; }
+  .cap-link .sz { font-family: Consolas, monospace; font-size: 0.72rem; color: var(--muted); }
+  .cap-date { font-size: 0.78rem; color: var(--muted); font-family: Consolas, monospace; letter-spacing: 0.06em; }
 
-    .stat-row {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 0.55rem;
-      margin: 1.5rem 0 0;
-    }
-    .stat {
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 0.75rem 0.5rem;
-      text-align: center;
-    }
-    .stat b { display: block; font-size: 1.2rem; color: var(--seal); font-family: Consolas, monospace; }
-    .stat span { font-size: 0.78rem; color: var(--muted); }
+  /* ============ 通用 section / 表格 / 卡片 ============ */
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 1.2rem; }
+  .page-head { padding: 3rem 0 1.6rem; }
+  .page-head .crumb { font-family: Consolas, monospace; font-size: 0.76rem; letter-spacing: 0.14em; color: var(--seal); margin: 0 0 0.5rem; }
+  .page-head h1 { margin: 0 0 0.5rem; font-size: clamp(1.7rem, 4vw, 2.5rem); letter-spacing: 0.01em; }
+  .page-head .desc { margin: 0; color: var(--muted); max-width: 44rem; }
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 1.4rem 1.5rem; margin-bottom: 1rem; }
+  h2.sec { margin: 0 0 0.8rem; font-size: 1.2rem; padding-left: 0.6rem; border-left: 3px solid var(--seal); }
+  table { width: 100%; border-collapse: collapse; font-size: 0.92rem; margin: 0.5rem 0 0; }
+  th, td { border-bottom: 1px solid var(--line); padding: 0.6rem 0.45rem; text-align: left; vertical-align: top; }
+  th { color: var(--muted); font-size: 0.78rem; font-weight: 700; }
+  .ok { color: var(--mint); font-weight: 700; } .no { color: var(--muted); } .part { color: var(--amber); font-weight: 700; }
+  .pill { display: inline-block; padding: 0.14rem 0.55rem; border-radius: 999px; font-size: 0.72rem; font-weight: 700; }
+  .pill.seal { background: var(--seal-soft); color: var(--seal); }
+  .pill.mint { background: rgba(47,143,102,.13); color: var(--mint); }
+  .pill.amber { background: rgba(176,122,26,.15); color: var(--amber); }
+  .note { margin-top: 1rem; padding: 0.8rem 1rem; border-radius: 12px; background: var(--seal-soft); color: var(--seal); font-size: 0.88rem; }
 
-    section {
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      padding: 1.35rem 1.4rem;
-      margin-bottom: 0.95rem;
-    }
-    h2 {
-      margin: 0 0 0.85rem;
-      font-size: 1.2rem;
-      padding-left: 0.55rem;
-      border-left: 3px solid var(--seal);
-    }
-    h3 {
-      margin: 1.05rem 0 0.35rem;
-      font-size: 1rem;
-    }
-    ul { margin: 0.35rem 0 0; padding-left: 1.15rem; }
-    li { margin: 0.22rem 0; }
-    p.muted { color: var(--muted); font-size: 0.88rem; }
+  /* ============ 介绍页：左内容 + 右音波列表 ============ */
+  /* 介绍页：design.html 的布局与动效，颜色以官网底色为准（卡片微交替，不引入突兀深块） */
+  .intro-grid { display: grid; grid-template-columns: minmax(0, 1fr) 250px; gap: 1.6rem; align-items: start; }
+  .intro-col { display: flex; flex-direction: column; gap: 1rem; min-width: 0; }
+  .intro-main { min-width: 0; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--card); }
+  .box { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); }
+  .d-sec { padding: 2.2rem 1.9rem; scroll-margin-top: 92px; color: var(--text); }
+  .d-sec.alt { background: var(--bg-2); }
+  .d-sec + .d-sec { border-top: 1px solid var(--line); }
+  .d-sec .idx { font-family: Consolas, monospace; font-size: 0.8rem; letter-spacing: 0.14em;
+    color: var(--seal); margin: 0 0 0.35rem; }
+  .d-sec h2 { margin: 0 0 0.55rem; font-size: 1.42rem; letter-spacing: 0.01em; }
+  .d-sec p { margin: 0.35rem 0; font-size: 0.95rem; }
+  .d-sec ul { margin: 0.45rem 0 0; padding-left: 1.2rem; }
+  .d-sec li { margin: 0.3rem 0; font-size: 0.93rem; }
+  /* 入场动效：纯淡入（无位移，避免长页面滚动时节块错位露缝） */
+  .d-sec.reveal { opacity: 0; transition: opacity .6s ease; }
+  .d-sec.reveal.in { opacity: 1; }
+  .wave-toc { position: sticky; top: 84px; background: var(--bg); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 0.9rem 0.7rem; }
+  .wave-toc .wt-title { font-family: Consolas, monospace; font-size: 0.7rem; letter-spacing: 0.18em;
+    color: var(--muted); padding: 0 0.6rem 0.5rem; }
+  .wave-toc ul { list-style: none; margin: 0; padding: 0; max-height: calc(100vh - 200px); overflow: auto; }
+  .wave-item { display: flex; align-items: center; gap: 0.55rem; width: 100%; padding: 0.5rem 0.6rem;
+    border: none; background: none; border-radius: 10px; font: inherit; font-size: 0.86rem; font-weight: 600;
+    color: var(--muted); cursor: pointer; text-align: left; }
+  .wave-item:hover { background: var(--seal-soft); color: var(--seal); }
+  .wave-item.on { color: var(--seal); background: var(--seal-soft); }
+  .eq { display: inline-flex; align-items: flex-end; gap: 2px; height: 14px; flex: 0 0 16px; }
+  .eq i { width: 2.5px; border-radius: 1px; background: currentColor; opacity: 0.4; transform-origin: bottom; }
+  .eq i:nth-child(1) { height: 6px; } .eq i:nth-child(2) { height: 12px; } .eq i:nth-child(3) { height: 8px; }
+  .eq i:nth-child(4) { height: 13px; } .eq i:nth-child(5) { height: 5px; }
+  .wave-item.on .eq i { opacity: 1; animation: eq 0.9s ease-in-out infinite; }
+  .wave-item.on .eq i:nth-child(2) { animation-delay: .12s; } .wave-item.on .eq i:nth-child(3) { animation-delay: .24s; }
+  .wave-item.on .eq i:nth-child(4) { animation-delay: .36s; } .wave-item.on .eq i:nth-child(5) { animation-delay: .48s; }
+  @keyframes eq { 0%, 100% { transform: scaleY(0.55); } 50% { transform: scaleY(1); } }
+  .wave-toc .sz { font-family: Consolas, monospace; font-size: 0.66rem; color: var(--muted); font-weight: 500; margin-left: auto; }
+  /* 目录分组间隔线（此前漏样式，渲染成了空条目） */
+  .toc-sep { height: 1px; margin: 0.5rem 0.6rem; background: var(--line); list-style: none; }
+  /* 手册目录树：h2 章节 + h3 子节（可展开收起，App 同款层级） */
+  .toc-h3s { display: none; padding-left: 1.4rem; }
+  .toc-h2s.open .toc-h3s { display: block; }
+  .wave-item.sub { font-size: 0.79rem; font-weight: 500; padding: 0.32rem 0.55rem; }
+  .toc-arrow { margin-left: auto; width: 7px; height: 7px; flex: 0 0 auto;
+    border-right: 2px solid currentColor; border-bottom: 2px solid currentColor;
+    transform: rotate(45deg); transform-origin: 50% 50%; transition: transform .2s; opacity: .6; }
+  .toc-h2s.open > .wave-item .toc-arrow { transform: rotate(225deg); }
+  /* 下载区：多版本行式按钮 */
+  .dl-zone { scroll-margin-top: 92px; background: var(--card); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 1.3rem 1.5rem; margin-bottom: 0.9rem; }
+  .dl-group { font-family: Consolas, monospace; font-size: 0.72rem; letter-spacing: 0.14em;
+    color: var(--muted); margin: 0.9rem 0 0.2rem; }
+  .dl-row { display: flex; align-items: center; justify-content: space-between; gap: 0.9rem;
+    padding: 0.55rem 0.2rem; border-bottom: 1px dashed var(--line); }
+  .dl-row:last-child { border-bottom: none; }
+  .dl-row .dl-name { font-weight: 700; font-size: 0.92rem; }
+  .dl-row .dl-name .dl-abi { font-family: Consolas, monospace; font-size: 0.74rem; color: var(--muted); margin-left: 0.5rem; }
+  .dl-row a { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.42rem 1.05rem;
+    border-radius: 999px; background: var(--seal); color: #fff; font-weight: 700; font-size: 0.84rem; }
+  .dl-row a:hover { filter: brightness(1.1); }
+  .dl-row .sz { font-family: Consolas, monospace; font-size: 0.74rem; color: var(--muted); margin-right: 0.6rem; }
+  .cmp-table td:first-child { font-weight: 700; }
 
-    .grid3 {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 0.75rem;
-    }
-    .tile {
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 0.9rem;
-      background: linear-gradient(180deg, #fff, #faf8f2);
-    }
-    .tile h3 { margin: 0 0 0.35rem; font-size: 0.98rem; }
-    .tile p { margin: 0; font-size: 0.88rem; color: var(--muted); }
-    .tile .n {
-      font-family: Consolas, monospace;
-      color: var(--seal);
-      font-size: 0.72rem;
-      letter-spacing: 0.08em;
-    }
+  /* ============ 版本日志 ============ */
+  .log-list { min-width: 0; }
+  .log-card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 1.2rem 1.4rem; margin-bottom: 0.9rem; scroll-margin-top: 92px; }
+  .log-head { display: flex; align-items: baseline; gap: 0.8rem; flex-wrap: wrap; }
+  .log-head h2 { margin: 0; font-size: 1.3rem; color: var(--seal); }
+  .log-head time { font-family: Consolas, monospace; font-size: 0.8rem; color: var(--muted); }
+  .log-kind { margin: 0.25rem 0 0.5rem; }
+  .log-card ul { margin: 0; padding-left: 1.2rem; }
+  .log-card li { margin: 0.3rem 0; font-size: 0.93rem; }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.92rem;
-      margin-top: 0.4rem;
-    }
-    th, td {
-      border-bottom: 1px solid var(--line);
-      padding: 0.55rem 0.4rem;
-      text-align: left;
-      vertical-align: top;
-    }
-    th { color: var(--muted); font-size: 0.78rem; font-weight: 700; }
+  /* ============ 手册 ============ */
+  .manual-grid { display: grid; grid-template-columns: minmax(0, 1fr) 250px; gap: 1.6rem; align-items: start; }
+  .manual-search input { width: 100%; padding: 0.7rem 1rem; border-radius: 12px; border: 1px solid var(--line);
+    background: var(--card); color: var(--text); font: inherit; font-size: 0.95rem; outline: none; }
+  .manual-search input:focus { border-color: var(--seal); }
+  /* 搜索跳转控件条（App 同款：红色上下箭头 + N/M 计数；缩小版，置于目录上方） */
+  .manual-ctrl { display: flex; align-items: center; gap: 0.4rem; padding: 0.4rem 0.5rem;
+    border-bottom: 1px solid var(--glass-line); margin-bottom: 0.5rem; }
+  .mc-btn { width: 26px; height: 26px; border: 1px solid var(--line); border-radius: 7px;
+    background: var(--card); color: var(--seal); cursor: pointer; display: flex; align-items: center;
+    justify-content: center; font-size: 0.62rem; font-weight: 700; font-family: inherit; }
+  .mc-btn:hover:not(:disabled) { background: var(--seal-soft); }
+  .mc-btn:disabled { opacity: 0.35; cursor: default; }
+  .mc-btn .up { display: block; width: 6px; height: 6px; border-left: 2px solid currentColor;
+    border-top: 2px solid currentColor; transform: rotate(45deg) translate(1px, 1px); }
+  .mc-btn .down { display: block; width: 6px; height: 6px; border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor; transform: rotate(45deg) translate(-1px, -1px); }
+  .mc-count { font-family: Consolas, monospace; font-size: 0.72rem; color: var(--seal); min-width: 44px; text-align: center; font-weight: 700; }
+  .manual-content { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 1.6rem 1.8rem; font-size: 0.95rem; }
+  .manual-content h1 { font-size: 1.6rem; margin: 0.2rem 0 1rem; }
+  .manual-content h2 { font-size: 1.28rem; margin: 1.8rem 0 0.7rem; padding-left: 0.6rem; border-left: 3px solid var(--seal); scroll-margin-top: 130px; }
+  .manual-content h3 { font-size: 1.05rem; margin: 1.4rem 0 0.5rem; scroll-margin-top: 130px; }
+  .manual-content code { font-family: Consolas, monospace; font-size: 0.86em; background: var(--seal-soft);
+    color: var(--seal); padding: 0.05rem 0.35rem; border-radius: 5px; }
+  .manual-content blockquote { margin: 0.8rem 0; padding: 0.75rem 1rem; border-left: 3px solid var(--amber);
+    background: rgba(176,122,26,.08); border-radius: 8px; color: var(--text); }
+  .manual-content table { font-size: 0.88rem; }
+  /* 命中：荧光笔黄；当前处：橙色实底（App 同款） */
+  .manual-content mark { background: rgba(255, 232, 0, 0.55); color: inherit; padding: 0 2px; border-radius: 3px; }
+  html[data-theme="dark"] .manual-content mark { background: rgba(255, 232, 0, 0.32); }
+  .manual-content mark.cur { background: #e07064; color: #fff; }
+  .manual-content hr { border: none; border-top: 1px solid var(--line); margin: 1.5rem 0; }
+  .manual-content p { margin: 0.5rem 0; }
 
-    .pill {
-      display: inline-block;
-      padding: 0.12rem 0.5rem;
-      border-radius: 999px;
-      font-size: 0.72rem;
-      font-weight: 700;
-      margin: 0 0.15rem 0.15rem 0;
-    }
-    .pill.seal { background: var(--seal-soft); color: var(--seal); }
-    .pill.mint { background: rgba(47,143,102,.12); color: var(--mint); }
-    .pill.amber { background: rgba(176,122,26,.14); color: var(--amber); }
+  /* ============ 设计方案视图（iframe 嵌 design.html，iframe 内独立滚动，100% 原样） ============ */
+  #view-design { background: #14181c; }
+  #designFrame { display: block; width: 100%; height: calc(100vh - 58px); height: calc(100dvh - 58px);
+    border: none; }
+  /* 竖线目录：滚到对应节，线变长变红并浮现章节标题（design 内固定深色调） */
+  .dot-nav { position: fixed; right: 26px; top: 50%; transform: translateY(-50%); z-index: 60;
+    display: flex; flex-direction: column; gap: 14px; align-items: flex-end; }
+  .dot-item { display: flex; align-items: center; gap: 0.55rem; background: none; border: none;
+    cursor: pointer; font: inherit; padding: 0; }
+  .dot-item .dot-label { font-size: 0.78rem; font-weight: 600; color: #9aa3a8;
+    opacity: 0; transform: translateX(6px); transition: opacity .2s, transform .2s, color .2s; white-space: nowrap; }
+  .dot-item .dot { width: 18px; height: 2px; flex: 0 0 auto; border-radius: 1px;
+    background: #9aa3a8; opacity: 0.55; transition: all .25s; }
+  .dot-item:hover .dot-label, .dot-item.on .dot-label { opacity: 1; transform: none; }
+  .dot-item.on .dot-label { color: #e07064; }
+  .dot-item.on .dot { width: 30px; background: #e07064; opacity: 1; }
+  #view-design.view.on ~ .site-footer { display: none; }
+  @media (max-width: 900px) { .dot-nav { display: none; } }
+  /* 手机上 cap-panel 改回下方弹出单列；限高可滚动，保证 8 个包全部可达 */
+  @media (max-width: 640px) {
+    .cap-panel { min-width: 0; width: min(92vw, 430px); grid-template-columns: 1fr;
+      left: 50%; top: calc(100% + 12px); transform: translateX(-50%) translateY(-6px);
+      max-height: min(60vh, 480px); overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    .cap-item.open .cap-panel { transform: translateX(-50%) translateY(0); }
+  }
 
-    .note {
-      margin-top: 1rem;
-      padding: 0.75rem 0.9rem;
-      border-radius: 10px;
-      background: var(--seal-soft);
-      color: var(--seal);
-      font-size: 0.88rem;
-    }
+  /* ============ 汉堡按钮 + 移动菜单（QQ 移动端同款：整屏列表 + 子项展开） ============ */
+  .hamburger { display: none; width: 40px; height: 40px; border: none; background: none;
+    cursor: pointer; padding: 0; align-items: center; justify-content: center; border-radius: 10px; color: var(--text); }
+  .hamburger:hover { background: var(--seal-soft); color: var(--seal); }
+  .hamburger svg { width: 22px; height: 22px; }
+  #mMenu { position: fixed; inset: 0; z-index: 120; background: var(--bg);
+    transform: translateY(-100%); transition: transform .3s ease; overflow-y: auto; }
+  #mMenu.open { transform: translateY(0); }
+  .mm-head { display: flex; align-items: center; justify-content: space-between;
+    padding: 0.7rem 1rem; border-bottom: 1px solid var(--line); }
+  .mm-close { width: 40px; height: 40px; border: none; background: none; cursor: pointer;
+    color: var(--text); display: flex; align-items: center; justify-content: center; border-radius: 10px; }
+  .mm-close:hover { background: var(--seal-soft); color: var(--seal); }
+  .mm-close svg { width: 20px; height: 20px; }
+  .mm-list { padding: 0.4rem 0 3rem; }
+  .mm-item { border-bottom: 1px solid var(--line); }
+  .mm-btn { display: flex; align-items: center; justify-content: space-between; width: 100%;
+    padding: 1.05rem 1.3rem; background: none; border: none; font: inherit; font-size: 1.06rem;
+    color: var(--text); cursor: pointer; text-align: left; }
+  .mm-btn:hover { color: var(--seal); }
+  .mm-btn .chev { width: 9px; height: 9px; flex: 0 0 auto; border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor; transform: rotate(45deg); transform-origin: 50% 50%;
+    transition: transform .25s; margin: -3px 2px 0 0; }
+  .mm-item.open > .mm-btn .chev { transform: rotate(225deg); margin-top: 3px; }
+  .mm-item.open > .mm-btn { color: var(--seal); }
+  .mm-subs { display: none; padding-bottom: 0.5rem; }
+  .mm-item.open > .mm-subs { display: block; }
+  .mm-subs a, .mm-subs button { display: block; width: 100%; padding: 0.65rem 2rem; background: none;
+    border: none; font: inherit; font-size: 0.95rem; color: var(--muted); cursor: pointer; text-align: left; }
+  .mm-subs a:hover, .mm-subs button:hover { color: var(--seal); }
+  .mm-note { padding: 1rem 1.3rem; font-size: 0.78rem; color: var(--muted); }
 
-    footer {
-      text-align: center;
-      padding: 1.25rem 1rem 2.25rem;
-      color: var(--muted);
-      font-size: 0.85rem;
-    }
+  /* ============ 窄屏目录：浮球 + 底部抽屉（替代顶部内嵌目录） ============ */
+  #tocFab { display: none; position: fixed; right: 16px; bottom: 22px; z-index: 95;
+    width: 52px; height: 52px; border-radius: 50%; border: none; cursor: pointer;
+    background: var(--seal); color: #fff; box-shadow: 0 8px 22px rgba(0,0,0,.28);
+    align-items: center; justify-content: center; }
+  #tocFab svg { width: 22px; height: 22px; }
+  #tocSheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 96;
+    background: var(--bg); border-top: 1px solid var(--line);
+    border-radius: 18px 18px 0 0; box-shadow: 0 -12px 34px rgba(0,0,0,.3);
+    transform: translateY(105%); transition: transform .3s ease;
+    max-height: 68vh; display: flex; flex-direction: column; }
+  #tocSheet.open { transform: translateY(0); }
+  #tocSheet .ts-head { display: flex; align-items: center; justify-content: space-between;
+    padding: 0.85rem 1.2rem 0.6rem; border-bottom: 1px solid var(--line);
+    font-family: Consolas, monospace; font-size: 0.74rem; letter-spacing: 0.16em; color: var(--muted); }
+  #tocSheet .ts-body { overflow-y: auto; padding: 0.5rem 0.7rem 1.2rem; }
+  #tocSheet .wave-item { padding: 0.6rem 0.7rem; }
+  #tocSheet .toc-h3s { padding-left: 1.2rem; }
 
-    @media (max-width: 720px) {
-      .stat-row { grid-template-columns: repeat(2, 1fr); }
-      .grid3 { grid-template-columns: 1fr; }
-      table, thead, tbody, tr, th, td { display: block; }
-      th { display: none; }
-      td { border-bottom: 0; padding: 0.25rem 0; }
-      td::before { content: attr(data-l) " · "; color: var(--muted); font-weight: 700; }
-      tr { border-bottom: 1px solid var(--line); padding: 0.45rem 0; display: block; }
-    }
-  </style>
+  /* ============ 窄屏下载抽屉（手机点胶囊展开全部包体，替代小面板） ============ */
+  #dlSheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 97;
+    background: var(--bg); border-top: 1px solid var(--line);
+    border-radius: 18px 18px 0 0; box-shadow: 0 -12px 34px rgba(0,0,0,.3);
+    transform: translateY(105%); transition: transform .3s ease;
+    max-height: 74vh; display: flex; flex-direction: column; }
+  #dlSheet.open { transform: translateY(0); }
+  #dlSheet .ds-head { display: flex; align-items: center; justify-content: space-between;
+    padding: 0.85rem 1.2rem 0.6rem; border-bottom: 1px solid var(--line);
+    font-size: 0.95rem; font-weight: 700; }
+  #dlSheet .ds-body { overflow-y: auto; padding: 0.3rem 1.1rem 1.6rem; }
+  #dlSheet .dl-group { margin-top: 0.8rem; }
+
+  /* ============ 页脚六行 ============ */
+  footer.site-footer { text-align: center; padding: 2.2rem 1rem 2.6rem; color: var(--muted); font-size: 0.85rem; line-height: 2; }
+  footer.site-footer p { margin: 0; }
+  footer.site-footer .sep { letter-spacing: 0.6em; }
+
+  /* ============ 自定义滚动条：轨道透明（即网页底色），滑块用主题线色 ============ */
+  * { scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+  ::-webkit-scrollbar-corner { background: transparent; }
+
+  @media (max-width: 900px) {
+    /* 顶栏：品牌 + 主题开关 + 汉堡（导航收进全屏菜单）。桌面端导航一体化、不出现内部滚动容器 */
+    .nav-mid, .nav-right .nav-item { display: none; }
+    .hamburger { display: inline-flex; }
+    .topbar-in { grid-template-columns: 1fr auto; }
+    .nav-right { gap: 0.15rem; }
+    .intro-grid, .manual-grid { grid-template-columns: 1fr; }
+    /* 目录：窄屏收进浮球抽屉 */
+    .wave-toc { display: none; }
+    #tocFab { display: inline-flex; }
+    /* 手册页例外：窄屏保留搜索与箭头控件（固定于正文上方），仅目录列表进浮球 */
+    .manual-grid .wave-toc { display: flex; order: -1; position: sticky; top: 66px; z-index: 6;
+      padding: 0.6rem 0.7rem; }
+    .manual-grid .wave-toc ul { display: none; }
+  }
+  @media (max-width: 640px) {
+    .topbar-in { padding: 0.45rem 0.7rem; }
+    .brand .bt .cn { font-size: 0.92rem; }
+    .nav-btn { padding: 0.4rem 0.6rem; font-size: 0.84rem; }
+    .hero-in { padding: 2.6rem 1rem 2.2rem; }
+    .dl-caps { flex-direction: column; gap: 1.7rem; }
+    .cap-btn { padding: 0.75rem 1.7rem; font-size: 0.96rem; }
+    .dl-row { flex-wrap: wrap; row-gap: 0.3rem; }
+    .dl-row a { margin-left: auto; }
+    .page-head { padding: 2.2rem 0 1.2rem; }
+    /* 窄屏表格自适应：长内容（包名）强制换行，不溢出框外 */
+    .d-sec table, .manual-content table { table-layout: fixed; width: 100%; }
+    .d-sec th, .d-sec td, .manual-content th, .manual-content td {
+      word-break: break-word; overflow-wrap: anywhere; padding: 0.5rem 0.35rem; }
+  }
+</style>
 </head>
 <body>
-  <nav class="nav">
-    <div class="brand">
-      <span>LOCALSCAN</span>
-      <strong>码上记</strong>
-    </div>
-    <div class="nav-links">
-      <a href="./index.html" class="active">产品</a>
-      <a href="./design.html">设计方案</a>
-      <a href="#features">功能</a>
-      <a href="#rules">规则</a>
-      <a href="#tech">架构</a>
-    </div>
-  </nav>
-
-  <header class="hero">
-    <p class="eyebrow">LOCAL INVENTORY · PRIVACY FIRST</p>
-    <h1>码上记 LocalScan</h1>
-    <p>
-      本地物品与库存管理。扫码建档、状态跟踪、离线导出；数据默认留在设备里，
-      需要时再通过文件或点对点同步带走——不绑账号，不上云。
-    </p>
-    <div class="hero-actions">
-      <a class="btn btn-primary" href="#features">了解功能</a>
-      <a class="btn btn-ghost" href="./releases/LocalScan-debug-v1.4.0.apk">下载 v1.4.0 APK</a>
-      <a class="btn btn-ghost" href="./design.html">设计方案</a>
-    </div>
-    <div class="stat-row">
-      <div class="stat"><b>0</b><span>账号 / 云端</span></div>
-      <div class="stat"><b>ML Kit</b><span>原生扫码</span></div>
-      <div class="stat"><b>4+</b><span>状态维度</span></div>
-      <div class="stat"><b>AES</b><span>加密备份</span></div>
+  <div id="dropMask"></div>
+  <header class="topbar">
+    <div class="topbar-in">
+      <button class="brand" data-go="#/" aria-label="返回首页">
+        <img src="data:image/png;base64,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" alt="码上记图标" />
+        <span class="bt"><span class="en">LOCALSCAN</span><span class="cn">码上记</span></span>
+      </button>
+      <nav class="nav-mid" aria-label="主导航">
+        <div class="nav-item"><button class="nav-btn" data-go="#/">首页</button></div>
+        <div class="nav-item" data-drop data-mask>
+          <button class="nav-btn" data-drop-btn>产品介绍 <span class="chev"></span></button>
+          <div class="dropdown">
+            <button data-go="#/intro-140">v1.4.0 版本介绍</button>
+            <button data-go="#/intro-1100">v1.10.0 版本介绍</button>
+          </div>
+        </div>
+        <div class="nav-item" data-drop data-mask>
+          <button class="nav-btn" data-drop-btn>产品下载 <span class="chev"></span></button>
+          <div class="dropdown">
+            <button data-go="#/intro-140" data-dl="140">v1.4.0 版本下载 <span class="sub">APK</span></button>
+            <button data-go="#/intro-1100" data-dl="1100">v1.10.0 离线版下载 <span class="sub">APK</span></button>
+            <button data-go="#/intro-1100" data-dl="1100">v1.10.0 联网版下载 <span class="sub">APK</span></button>
+          </div>
+        </div>
+        <div class="nav-item"><button class="nav-btn" data-go="#/log">版本日志</button></div>
+        <div class="nav-item"><button class="nav-btn" data-go="#/manual">手册</button></div>
+      </nav>
+      <div class="nav-right">
+        <div class="nav-item" data-drop data-mask>
+          <button class="nav-btn" data-drop-btn id="navAboutBtn">关于 <span class="chev"></span></button>
+          <div class="dropdown" style="min-width:210px">
+            <button data-go="#/design">设计方案</button>
+            <a href="https://github.com/xhowu" target="_blank" rel="noreferrer">GitHub - 作者 <span class="sub">↗</span></a>
+            <a href="https://github.com/xhowu/LocalScan" target="_blank" rel="noreferrer">GitHub - LocalScan <span class="sub">↗</span></a>
+          </div>
+        </div>
+        <button class="nav-btn theme-btn" id="themeBtn" aria-label="切换深浅色">
+          <svg class="icon moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+          <svg class="icon sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"/></svg>
+        </button>
+        <button class="hamburger" id="hamburger" aria-label="打开菜单">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 6.5h18M3 12h18M3 17.5h18"/></svg>
+        </button>
+      </div>
     </div>
   </header>
 
-  <main class="wrap">
-    <section id="features">
-      <h2>核心能力</h2>
-      <div class="grid3">
-        <article class="tile">
-          <p class="n">01</p>
-          <h3>物品台账</h3>
-          <p>名称、条码、分类、位置、数量与财务信息；图片可删可排序；长按卡片快捷操作。</p>
-        </article>
-        <article class="tile">
-          <p class="n">02</p>
-          <h3>扫码建档</h3>
-          <p>Android 上 Google ML Kit 相机 / 相册识别；Web 兜底 zxing + jsQR；闪光灯与结果弹窗。</p>
-        </article>
-        <article class="tile">
-          <p class="n">03</p>
-          <h3>多仓库</h3>
-          <p>左缘滑出切换；首页状态卡片与仓库统计同步；导出与同步绑定当前仓库。</p>
-        </article>
-        <article class="tile">
-          <p class="n">04</p>
-          <h3>临期体系</h3>
-          <p>生产日期 + 保质期（月）自动算截止；临期阈值驱动在库 / 临期 / 过期统计。</p>
-        </article>
-        <article class="tile">
-          <p class="n">05</p>
-          <h3>可配置筛选</h3>
-          <p>分类 / 位置 / 状态多维筛选并记忆；状态卡片可排序、隐藏、恢复。</p>
-        </article>
-        <article class="tile">
-          <p class="n">06</p>
-          <h3>导出与同步</h3>
-          <p>CSV / XLSX / 含图 ZIP；JSON 同步包合并；AES-GCM 加密备份与局域网面板。</p>
-        </article>
+  <!-- ============ 移动端整屏菜单（QQ 移动端同款） ============ -->
+  <div id="mMenu" aria-hidden="true">
+    <div class="mm-head">
+      <button class="brand" data-go="#/">
+        <img src="data:image/png;base64,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" alt="码上记图标" />
+        <span class="bt"><span class="en">LOCALSCAN</span><span class="cn">码上记</span></span>
+      </button>
+      <button class="mm-close" id="mmClose" aria-label="关闭菜单">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg>
+      </button>
+    </div>
+    <nav class="mm-list">
+      <div class="mm-item"><button class="mm-btn" data-go="#/">首页</button></div>
+      <div class="mm-item">
+        <button class="mm-btn" data-mdrop>产品介绍 <span class="chev"></span></button>
+        <div class="mm-subs">
+          <button data-go="#/intro-140">v1.4.0 版本介绍</button>
+          <button data-go="#/intro-1100">v1.10.0 版本介绍</button>
+        </div>
       </div>
-    </section>
+      <div class="mm-item">
+        <button class="mm-btn" data-mdrop>产品下载 <span class="chev"></span></button>
+        <div class="mm-subs">
+          <button data-go="#/intro-140" data-dl="140">v1.4.0 版本下载</button>
+          <button data-go="#/intro-1100" data-dl="1100">v1.10.0 离线版下载</button>
+          <button data-go="#/intro-1100" data-dl="1100">v1.10.0 联网版下载</button>
+        </div>
+      </div>
+      <div class="mm-item"><button class="mm-btn" data-go="#/log">版本日志</button></div>
+      <div class="mm-item"><button class="mm-btn" data-go="#/manual">手册</button></div>
+      <div class="mm-item">
+        <button class="mm-btn" data-mdrop>关于 <span class="chev"></span></button>
+        <div class="mm-subs">
+          <button data-go="#/design">设计方案</button>
+          <a href="https://github.com/xhowu" target="_blank" rel="noreferrer">GitHub - 作者 ↗</a>
+          <a href="https://github.com/xhowu/LocalScan" target="_blank" rel="noreferrer">GitHub - LocalScan ↗</a>
+        </div>
+      </div>
+    </nav>
+    <p class="mm-note">码上记 LocalScan · 数据默认不出设备</p>
+  </div>
 
-    <section>
-      <h2>典型场景</h2>
-      <p>
-        <span class="pill seal">个人数码 / 工具箱</span>
-        <span class="pill seal">家庭物资与药品</span>
-        <span class="pill amber">耗材临期提醒</span>
-        <span class="pill mint">小团队仓库盘点</span>
-        <span class="pill mint">工作室物料台账</span>
-      </p>
-      <p class="muted">适合需要「一眼看清有多少、在哪里、是否临期」，又不愿把数据交给第三方的用户。</p>
-    </section>
+  <!-- ============ 窄屏目录：浮球 + 底部抽屉 ============ -->
+  <button id="tocFab" aria-label="目录">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6.5h10M4 12h10M4 17.5h10M17.5 6.5h2.5M17.5 12h2.5M17.5 17.5h2.5"/></svg>
+  </button>
+  <div id="tocSheet" aria-hidden="true">
+    <div class="ts-head"><span id="tsTitle">目录</span>
+      <button class="mm-close" id="tsClose" aria-label="关闭目录">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg>
+      </button>
+    </div>
+    <div class="ts-body" id="tsBody"></div>
+  </div>
 
-    <section id="rules">
-      <h2>状态与计算规则</h2>
-      <table>
-        <thead>
-          <tr><th>规则</th><th>定义</th></tr>
-        </thead>
-        <tbody>
-          <tr><td data-l="规则">截止日期</td><td data-l="定义">生产日期 + 保质期（月），按本地日历加月</td></tr>
-          <tr><td data-l="规则">在库</td><td data-l="定义">数量 &gt; 0</td></tr>
-          <tr><td data-l="规则">低库存</td><td data-l="定义">0 &lt; 数量 ≤ 低库存阈值</td></tr>
-          <tr><td data-l="规则">零库存</td><td data-l="定义">数量 = 0</td></tr>
-          <tr><td data-l="规则">临期</td><td data-l="定义">未过期，且 截止 − 今天 ≤ 临期阈值（月）</td></tr>
-          <tr><td data-l="规则">过期</td><td data-l="定义">截止日期 &lt; 今天 − 1 日（一日宽限）</td></tr>
-          <tr><td data-l="规则">同步合并</td><td data-l="定义">按 id / 条码匹配；较新 updatedAt 覆盖字段；version + 1</td></tr>
-        </tbody>
-      </table>
-      <div class="note">扫码只绑定「本地物品标识」，不做商品百科查询；未接入商品编码中心接口。</div>
-    </section>
+  <!-- ============ 窄屏下载抽屉（手机端展示 v1.10.0 全部包体） ============ -->
+  <div id="dlSheet" aria-hidden="true">
+    <div class="ds-head"><span>下载 v1.10.0</span>
+      <button class="mm-close" id="dsClose" aria-label="关闭">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg>
+      </button>
+    </div>
+    <div class="ds-body" id="dsBody"></div>
+  </div>
 
-    <section id="tech">
-      <h2>技术架构</h2>
-      <table>
-        <thead>
-          <tr><th>层</th><th>选型</th><th>说明</th></tr>
-        </thead>
-        <tbody>
-          <tr><td data-l="层">前端</td><td data-l="选型">React 19 · TypeScript · Vite</td><td data-l="说明">单页壳 + 哈希路由，顶底栏固定</td></tr>
-          <tr><td data-l="层">壳层</td><td data-l="选型">Capacitor 8 · Android</td><td data-l="说明">系统栏同色、相机与文件写入</td></tr>
-          <tr><td data-l="层">扫码</td><td data-l="选型">Google ML Kit</td><td data-l="说明">原生相机 / 相册；Web 兜底 zxing + jsQR</td></tr>
-          <tr><td data-l="层">存储</td><td data-l="选型">localStorage JSON</td><td data-l="说明">仓库、物品、分类位置、筛选配置</td></tr>
-          <tr><td data-l="层">导出</td><td data-l="选型">SheetJS · JSZip · WebCrypto</td><td data-l="说明">表格 / 归档 / AES-GCM 加密备份</td></tr>
-        </tbody>
-      </table>
-      <p class="muted">App 内「关于」页含可点击的代码结构饼图；占比为源码行数粗估。</p>
-    </section>
+  <main>
+    <!-- ================= 首页 ================= -->
+    <div class="view on" id="view-home">
+      <section class="hero">
+        <div class="grating"></div>
+        <div class="hero-in">
+          <p class="eyebrow">LOCAL INVENTORY · PRIVACY FIRST</p>
+          <h1>码上记<span class="lm">『LocalScan』</span></h1>
+          <p class="tagline">本地物品与库存管理。扫码建档、批次临期、离线导出、点对点同步——数据默认留在设备里，不绑账号，不上云。</p>
+          <div class="dl-caps">
+            <div class="dl-cap">
+              <a class="cap-btn" href="https://github.com/xhowu/LocalScan/releases/download/v1.4.0/LocalScan-v1.4.0.apk" download>v1.4.0 下载</a>
+              <span class="cap-date">2026-09-12</span>
+            </div>
+            <div class="dl-cap cap-item" id="cap1100">
+              <button class="cap-btn" data-cap-btn>v1.10.0 下载 <span class="cap-ico"></span></button>
+              <div class="cap-panel">
+                <p class="cap-col-title">OFFLINE · 离线版</p>
+                <p class="cap-col-title">ONLINE · 联网版</p>
+                <a class="cap-link" href="https://github.com/xhowu/LocalScan/releases/download/v1.10.0/LocalScan-v1.10.0.apk" download>universal<span class="sz">75MB</span></a>
+                <a class="cap-link" href="https://github.com/xhowu/LocalScan/releases/download/v1.10.0/LocalScan-v1.10.0-online.apk" download>universal<span class="sz">75MB</span></a>
+                <a class="cap-link" href="https://github.com/xhowu/LocalScan/releases/download/v1.10.0/LocalScan-v1.10.0-arm64.apk" download>arm64<span class="sz">29.5MB</span></a>
+                <a class="cap-link" href="https://github.com/xhowu/LocalScan/releases/download/v1.10.0/LocalScan-v1.10.0-online-arm64.apk" download>arm64<span class="sz">29.5MB</span></a>
+                <a class="cap-link" href="https://github.com/xhowu/LocalScan/releases/download/v1.10.0/LocalScan-v1.10.0-armv7.apk" download>armv7<span class="sz">23.5MB</span></a>
+                <a class="cap-link" href="https://github.com/xhowu/LocalScan/releases/download/v1.10.0/LocalScan-v1.10.0-online-armv7.apk" download>armv7<span class="sz">23.5MB</span></a>
+                <a class="cap-link" href="https://github.com/xhowu/LocalScan/releases/download/v1.10.0/LocalScan-v1.10.0-x86_64.apk" download>x86_64<span class="sz">31MB</span></a>
+                <a class="cap-link" href="https://github.com/xhowu/LocalScan/releases/download/v1.10.0/LocalScan-v1.10.0-online-x86_64.apk" download>x86_64<span class="sz">31MB</span></a>
+              </div>
+              <span class="cap-date">2026-09-25</span>
+            </div>
+          </div>
+        </div>
+      </section>
+      <div class="wrap">
+        <section class="panel" style="margin-top:1.5rem">
+          <h2 class="sec">v1.4.0 与 v1.10.0 功能对比</h2>
+          <table class="cmp-table">
+            <thead><tr><th>功能模块</th><th>v1.4.0</th><th>v1.10.0</th></tr></thead>
+            <tbody id="cmpBody"></tbody>
+          </table>
+          <p class="muted" style="font-size:0.82rem;margin:0.8rem 0 0">两版本功能均与对应 App 实现逐条核对：没有的功能不会出现，有的功能不会遗漏。</p>
+        </section>
+      </div>
+    </div>
 
-    <section>
-      <h2>安装与开始</h2>
-      <ul>
-        <li>下载 <a class="mono" href="./releases/LocalScan-debug-v1.4.0.apk">LocalScan-debug-v1.4.0.apk</a>，允许未知来源后安装</li>
-        <li>首次启动会写入示例仓库与物品，可在设置中一键清空</li>
-        <li>导出文件写入系统「文档 / LocalScan」</li>
-        <li>浏览器打开 <a href="./design.html">设计方案页</a> 可查看设计说明</li>
-      </ul>
-    </section>
+    <!-- ================= v1.4.0 介绍 ================= -->
+    <div class="view" id="view-intro-140">
+      <div class="wrap">
+        <header class="page-head">
+          <p class="crumb">INTRO · v1.4.0</p>
+          <h1>v1.4.0 版本介绍</h1>
+          <p class="desc">首个可用版本：物品台账、原生扫码、多仓库、临期体系、离线导出与加密备份。数据默认留在设备里，不绑账号，不上云。</p>
+        </header>
+        <div class="intro-grid">
+          <div class="intro-col">
+            <div class="intro-main" id="intro140"></div>
+            <div class="d-sec dl-zone" id="dl-140">
+              <p class="idx">DOWNLOAD</p><h2>下载 v1.4.0</h2>
+              <p class="muted">versionCode 4 · 2026-09-12 · 点击立即从 GitHub 下载</p>
+              <div class="dl-row"><span class="dl-name">LocalScan-v1.4.0.apk<span class="dl-abi">universal</span></span><span><span class="sz">31.6MB</span><a class="mono" href="https://github.com/xhowu/LocalScan/releases/download/v1.4.0/LocalScan-v1.4.0.apk" download>下载 ↓</a></span></div>
+            </div>
+            <div class="d-sec box" id="cmp-140"><h2 class="sec" style="border:none;padding-left:0;margin-bottom:0.4rem">版本对比</h2></div>
+          </div>
+          <aside class="wave-toc"><p class="wt-title">目录 · WAVE</p><ul id="toc140"></ul></aside>
+        </div>
+      </div>
+    </div>
 
-    <section>
-      <h2>版本</h2>
-      <p>
-        当前发布 <strong class="mono">v1.4.0</strong>
-        <span class="pill mint">versionCode 4</span>
-        <span class="pill amber">2026-09-12</span>
-      </p>
-      <p class="muted">完整更新日志见 App「设置 → 版本」或仓库 README。</p>
-    </section>
+    <!-- ================= v1.10.0 介绍 ================= -->
+    <div class="view" id="view-intro-1100">
+      <div class="wrap">
+        <header class="page-head">
+          <p class="crumb">INTRO · v1.10.0</p>
+          <h1>v1.10.0 版本介绍</h1>
+          <p class="desc">在 v1.4.0 全部能力之上：批次管理、文字识别、联网查询、内嵌相机、回收站、内置手册，以及与手册逐条互跳的功能模块清单。提供离线版与联网版两个安装包。</p>
+        </header>
+        <div class="intro-grid">
+          <div class="intro-col">
+            <div class="intro-main" id="intro1100"></div>
+            <div class="d-sec box" id="ol-1100"><h2 class="sec" style="border:none;padding-left:0">离线版与联网版</h2>
+              <p>码上记提供两个可共存的安装包，图标独立、数据各自独立。除联网查询外的一切功能在两个版本中完全相同。</p>
+              <table><thead><tr><th>版本</th><th>包名</th><th>联网能力</th></tr></thead><tbody>
+                <tr><td>离线版</td><td class="mono">com.localscan.app</td><td>无任何联网代码（联网查询在编译期被整体移除，不存在于安装包内）</td></tr>
+                <tr><td>联网版</td><td class="mono">com.localscan.app.online</td><td>可开启「条码商品信息查询」，默认关闭；三级兜底 GS1 → MXNZP → Open Food Facts</td></tr>
+              </tbody></table>
+              <div class="note">隐私边界：联网版只有在查询开关打开时才会把条码数字发送给所选数据源，其余数据不出设备；离线版则不存在联网代码。</div>
+            </div>
+            <div class="d-sec dl-zone" id="dl-1100">
+              <p class="idx">DOWNLOAD</p><h2>下载 v1.10.0</h2>
+              <p class="muted">versionCode 39 · 2026-09-25 · 点击立即从 GitHub 下载，按手机架构选择</p>
+              <p class="dl-group">OFFLINE · 离线版</p>
+              <p class="dl-group" style="margin-top:0.9rem">ONLINE · 联网版</p>
+            </div>
+            <div class="d-sec box" id="cmp-1100"><h2 class="sec" style="border:none;padding-left:0;margin-bottom:0.4rem">版本对比</h2></div>
+          </div>
+          <aside class="wave-toc"><p class="wt-title">目录 · WAVE</p><ul id="toc1100"></ul></aside>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= 版本日志 ================= -->
+    <div class="view" id="view-log">
+      <div class="wrap">
+        <header class="page-head">
+          <p class="crumb">CHANGELOG</p>
+          <h1>版本日志</h1>
+          <p class="desc">当前版本 <strong class="mono">v1.10.0</strong> · MAJOR 架构 · MINOR 新功能 · PATCH 修复</p>
+        </header>
+        <div class="intro-grid">
+          <div class="log-list" id="logList"></div>
+          <aside class="wave-toc"><p class="wt-title">版本 · WAVE</p><ul id="tocLog"></ul></aside>
+        </div>
+        <p class="muted" style="font-size:0.8rem">注：以上文本由AI生成</p>
+      </div>
+    </div>
+
+    <!-- ================= 手册 ================= -->
+    <div class="view" id="view-manual">
+      <div class="wrap">
+        <header class="page-head">
+          <p class="crumb">USER GUIDE</p>
+          <h1>App 使用手册</h1>
+          <p class="desc">与 v1.10.0 实现逐条对应 · 目录点击跳转 · 搜索关键词荧光高亮</p>
+        </header>
+        <div class="manual-grid">
+          <div class="manual-content" id="manual-content"><div class="manual-doc"><h1 class="m-h1">码上记『LocalScan』App 使用手册</h1>
+<blockquote><p>适用版本：v1.10.0（离线版 / 联网版）。</p><p>本文所有功能描述均与当前代码实现逐条核对，没有的功能不会出现在本文中，有的功能也不会遗漏。</p></blockquote>
+<hr/>
+<h2 id="sec-1">1. 认识码上记</h2>
+<p>码上记（LocalScan）是一款<strong>隐私优先</strong>的本地物品 / 库存管理应用，定位于"给自己的东西记一本账"：家里的杂物、仓库的货、工作室的器材，都可以用它登记、查找、盘点和导出。</p>
+<p>它的三条基本原则：</p>
+<ul><li><strong>无账号</strong>：不注册、不登录，没有任何用户体系。</li><li><strong>无云端</strong>：所有数据（物品、仓库、图片）都保存在你手机本地的浏览器存储（localStorage）里，应用不内置任何上传通道。</li><li><strong>可带走</strong>：任意时刻都可以把全部数据导出为表格、备份包或加密备份，换机不依赖任何"云同步"。</li></ul>
+<p>应用由 <strong>React 19 + TypeScript</strong> 编写界面，通过 <strong>Capacitor 8</strong> 打包为 Android 应用；扫码与文字识别使用 <strong>Google ML Kit</strong> 原生能力，浏览器预览环境下降级为 zxing + jsQR 纯前端识别。</p>
+<blockquote><p><strong>本手册内置在 App 中</strong>（关于页 → 手册）：目录点击跳转，有子项的章节可展开小节并跳转，右下角浮球可随时呼出目录（目录条加高便于点选）；搜索按关键词<strong>全文匹配</strong>，所有命中处<strong>荧光笔高亮</strong>且不隐藏任何内容，<strong>顶栏正下方固定高度</strong>的红色上下箭头控件可逐处跳转（N/M 计数，当前处橙色高亮）；输入后<strong>按回车立刻前往第一处命中</strong>并收起键盘。关于页的「功能」列表与本手册逐条对应：点击模块展开子功能后，按子功能条或模块右侧的「说明」可直接跳转到本手册的对应章节。</p></blockquote>
+<h2 id="sec-2">2. 安装与双版本</h2>
+<p>码上记提供两个可共存的安装包：</p>
+<div class="m-table"><table><thead><tr><th>版本</th><th>包名</th><th>联网能力</th></tr></thead><tbody><tr><td>离线版</td><td><code>com.localscan.app</code></td><td>无任何联网代码（联网查询在编译期被整体移除，不存在于安装包内）</td></tr><tr><td>联网版</td><td><code>com.localscan.app.online</code></td><td>可开启"条码商品信息查询"（见第 9 章），其余与离线版完全一致</td></tr></tbody></table></div>
+<p>两个版本可以同时安装在同一部手机上，图标独立、数据各自独立。除联网查询外的一切功能在两个版本中完全相同。</p>
+<h2 id="sec-3">3. 快速上手</h2>
+<p>首次启动时应用会自动创建第一个仓库「我的仓库」，并写入少量示例物品（含一条 Type-C 数据线、便携风扇、收纳箱，以及同一数据线下的第二个批次子项），用于直观展示"父子批次"的组织方式。示例数据可以随时修改或删除，也可以在设置中「清空全部数据」恢复示例。</p>
+<p>最短路径上手流程：</p>
+<ol><li>在<strong>物品页</strong>点击右下角红色加号（FAB）新建物品，或在<strong>扫码页</strong>扫描商品条码直接建档。</li><li>用顶栏的「仓库」按钮切换 / 新建仓库，数据按仓库隔离。</li><li>需要备份时进入 <strong>设置 → 导出与同步</strong>，选择表格导出、同步包或加密备份。</li></ol>
+<p>三个核心概念先建立起来，后面所有功能都围绕它们展开：</p>
+<ul><li><strong>仓库（Warehouse）</strong>：数据的第一级隔离单位，每个仓库有独立的物品集合与统计。</li><li><strong>物品（Item）</strong>：登记的主体，包含条码、名称、分类、位置、数量、价格、日期、自定义字段与图片。</li><li><strong>批次（父子关系）</strong>：同一仓库内条码相同的物品会组织成"父项 + 子项"两层结构，用来表达"同一商品的不同批次"。</li></ul>
+<h2 id="sec-4">4. 界面导览</h2>
+<ul><li><strong>顶栏（固定，不随内容滚动）</strong>：左侧是 LOCALSCAN / 码上记品牌标识，右侧是「仓库」切换按钮，显示当前仓库名，点开仓库抽屉。</li><li><strong>底部页签</strong>：主导航，包含物品、扫码等一级页面；编辑、关于等二级页面不显示页签。</li><li><strong>悬浮加号（FAB）</strong>：仅物品页出现，固定在右下角，点击直接新建物品。它悬浮在内容层之外，列表滚动与回弹不会带动它。</li><li><strong>页面进入动效</strong>：页面切换有轻微上移入场动效（扫码页除外，避免相机取景框测量偏移）。</li><li><strong>安全区适配</strong>：顶栏、底栏与抽屉按系统安全区（状态栏 / 导航条 / 刘海）自动让位，内容不被遮挡。</li></ul>
+<h2 id="sec-5">5. 物品管理</h2>
+<h3 id="sec-6" class="m-h3">5.1 物品列表</h3>
+<p>物品页从上到下依次是：</p>
+<ul><li><strong>搜索框</strong>：按名称、条码、备注实时模糊搜索。</li><li><strong>状态统计卡</strong>：一行四格（可自定义显示哪些状态，见第 12 章），点击状态卡即按该状态筛选，再点取消。</li><li><strong>筛选栏</strong>：左侧显示"当前"筛选摘要（分类 / 位置 / 状态组合与命中数量），右侧漏斗按钮展开筛选抽屉，可按分类、位置、状态三者组合筛选，支持一键重置。</li><li><strong>物品卡片列表</strong>：按"父项 → 其子项"归组展示。父项卡片显示名称（过长自动滚动跑马灯，也可手动拖动查看）、条码、分类胶囊（按分类着色）、数量、单位、低库存 / 临期 / 过期等警示胶囊；有子项的父项可展开 / 收起，子项行显示各自的批次日期摘要与数量。</li></ul>
+<p>卡片交互：</p>
+<ul><li><strong>单击</strong>卡片进入物品详情。</li><li><strong>长按</strong>卡片弹出快捷菜单（编辑 / 删除）；滚动列表或点击别处会自动关闭菜单，长按抬指产生的误触点击不会立即关掉菜单。</li></ul>
+<h3 id="sec-7" class="m-h3">5.2 新建与编辑物品</h3>
+<p>编辑页字段一览（全部与实现一一对应）：</p>
+<div class="m-table"><table><thead><tr><th>字段</th><th>说明</th></tr></thead><tbody><tr><td>条码</td><td>可由扫码 / 相册识别 / 手动输入填入；类型自动识别为 EAN13 / EAN8 / UPC / CODE128 / QR / CODE39 / 其他</td></tr><tr><td>名称</td><td>必填主体，过长在列表中自动滚动展示</td></tr><tr><td>分类</td><td>下拉选择，默认 8 类：数码、工具、家居、服饰、耗材、办公、食品、其他</td></tr><tr><td>位置</td><td>存放位置（如 A架-03），可自由输入，值来源由"分类与位置"管理</td></tr><tr><td>数量与单位</td><td>数量支持加减按钮与键盘输入；单位默认「件」</td></tr><tr><td>购入价 / 售价</td><td>可留空；币种默认 CNY</td></tr><tr><td>低库存阈值</td><td>默认 2；数量 ≤ 阈值且 &gt; 0 时标记"低库存"</td></tr><tr><td>生产日期</td><td>支持 <code>20260911</code> 或 <code>2026-09-11</code> 两种输入格式</td></tr><tr><td>保质期（月）</td><td>填写后自动推算截止日期</td></tr><tr><td>截止日期</td><td><strong>由生产日期 + 保质期自动推算</strong>，编辑页没有单独的输入框（文字识别读到截止日期时会直接写入）。</td></tr><tr><td>临期阈值（月）</td><td>默认 1；距截止日期不足 N 个月标记"临期"</td></tr><tr><td>备注</td><td>自由文本</td></tr><tr><td>自定义字段</td><td>由字段模板驱动的额外字段（见下），值保存在物品上</td></tr><tr><td>图片</td><td>拍照或相册选择，自动压缩，可删除与排序</td></tr></tbody></table></div>
+<p><strong>自定义字段模板</strong>（设置 → 自定义字段模板）：你可以预定义一组固定字段（如"保修到期""供应商"），编辑物品时这些字段会自动出现，所有物品共用同一套模板。字段值直接写在物品记录上，模板只负责"编辑页显示哪些字段"。</p>
+<p>保存 / 取消采用 replace 导航，返回不会回退到编辑页。</p>
+<h3 id="sec-8" class="m-h3">5.3 物品详情</h3>
+<ul><li><strong>状态胶囊行</strong>（数量区上方）：与物品页统计卡同一套判定规则，实时显示在库 / 低库存 / 零库存 / 临期 / 过期 / 无日期 / 无条码。</li><li><strong>标题自动滚动</strong>：名称超出导航栏宽度时自动往返滚动，可手动拖动。</li><li><strong>批次导航</strong>：子项详情页顶部显示"同条码父项"链接可跳回父项；"子项批次"框只在<strong>父项</strong>详情页显示（子项不能挂子项，框里空列表只会造成困惑）。</li><li>图片点击进入全屏查看器：双指缩放、双击放大、左右切换多图、下拉关闭；支持 90° 旋转预览（退出不改变存储方向）。</li><li>同条码的父项 / 子项可互相跳转（详情页内显示批次列表，点击即跳）。</li><li>支持编辑、删除。删除物品为软删除（数据标记 <code>deleted</code> 保留在本地，界面不再显示），删除父项会级联软删其子项。</li></ul>
+<h3 id="sec-9" class="m-h3">5.4 编辑页的更多细节</h3>
+<ul><li><strong>条码填充来源</strong>：扫码页命中后的结果弹窗可以直接"新建物品并填入"，条码与联网查询到的商品信息（名称、品牌、规格、净含量等）一并带过来，缺省字段再手动补全。</li><li><strong>临时字段</strong>：识别文字自动抽取但无法归类的信息会以 <code>tmp-</code> 前缀的临时字段挂在新物品上，键名和值都可以修改，确认有用后保留即可。</li><li><strong>同批次查重</strong>：对同一条码新建批次时，若生产日期与到期日期都和已有批次相同，应用会提示疑似重复，避免重复登记。</li><li><strong>父项的批次提示框</strong>："该项下有 N 个子项批次"提示框在浅色模式下的边框已加清晰（此前几乎看不出是个框）。</li><li><strong>数量输入</strong>：数量支持加减步进与直接键入；负数与非法输入会被拒绝。</li><li><strong>日期即时校验</strong>（输入框下方当场提示，红字为问题、绿字为有效回显）：</li><li>年份支持 4 位 0000–9999；月份 01–12；天数按当月真实天数限制（含闰年规则）；</li><li>位数不足：提示"还差 N 位，凑满 8 位自动推算截止日期"；</li><li>月份数字不存在（如 20261301 的 13 月）：提示"生产日期无效，13月月份不存在，不参与保存"；</li><li>天数不存在（如 20261232 的 32 日）：提示"生产日期无效，32日天数不存在，不参与保存"；</li><li>月、日都不存在（如 20261332）：提示"生产日期无效，13月32日日期不存在，不参与保存"；</li><li>非闰年写 2 月 29 日：提示"生产日期无效，非闰年02月无29日，不参与保存"；其他月份天数超出（如 4 月 31 日）：提示"生产日期无效，04月无31日，不参与保存"；</li><li>日期合法但晚于今天：红字提示<strong>与今天的间隔</strong>（换算为年月日，不足补零）——如今天是 2026年9月24 日、输入 20260930，提示"晚于今天，超前生产0000年00月06日，请核对"（警示不阻止）；</li><li>日期合法且不晚于今天：<strong>绿字回显推算的截止日期</strong>（如"截止日期 2028年3月1日"；未填保质期则回显生产日期有效）。</li></ul>
+<h3 id="sec-10" class="m-h3">5.5 回收站</h3>
+<p>入口：设置 → 数据 → <strong>回收站</strong>。软删除的物品会保留在本地存储里（这就是"数据还存在"的含义——记录标了 <code>deleted</code> 标记、界面不再显示，但一直占着存储），回收站把它们全部列出：</p>
+<ul><li>每条显示名称、所属仓库、数量与删除时间。</li><li><strong>恢复</strong>：一键回到原仓库；恢复的是<strong>父项</strong>时，其下已删除的子项批次会一起恢复。</li><li><strong>彻底删除</strong>：把记录从存储中真正移除，其独占的图片数据一并清理；此操作不可恢复。</li><li><strong>清空回收站</strong>：一键彻底删除全部软删物品。</li></ul>
+<h2 id="sec-11">6. 批次与父子关系</h2>
+<p>这是码上记处理"同一商品多批次"的核心机制：</p>
+<ul><li><strong>两层结构</strong>：同一仓库内条码相同的物品自动归为一组——最早登记的是父项，之后同条码新建的是子项（批次）。<strong>子项不允许再挂子项</strong>：如果导入数据里出现指向子项的父子关系，应用会自动上溯到根父项；上溯不到就成为独立物品，绝不会出现"孙项"。</li><li><strong>新建批次</strong>：在扫码结果或详情页对已有条码选择"新建批次"，记录各自的生产日期与数量。</li><li><strong>重复提示</strong>：同条码下生产日期与到期日期完全相同的批次会被识别为疑似重复并提示。</li><li><strong>批次排序</strong>：子项按"生产日期 → 到期日期 → 创建时间"排序，列表按父项在前、子项紧随其后展示。</li><li><strong>日期摘要</strong>：每个子项显示批次标签，优先显示"生产 2026年3月1日"这样的生产日期，没有则显示到期日期，再没有显示"未填日期"。</li></ul>
+<h2 id="sec-12">7. 图片</h2>
+<ul><li><strong>压缩</strong>：拍照 / 相册选图后自动压缩——最长边缩到 1080px 以内，JPEG 质量从 0.85 起步逐级下调，直到不超过 500KB。</li><li><strong>存储</strong>：图片以压缩后的 data URL 直接存入本地存储，与物品记录同生共死。</li><li><strong>编辑</strong>：编辑页支持旋转（旋转结果写回原图，不留孤儿数据）、删除、排序（多图时决定展示顺序）。</li><li><strong>详情页旋转</strong>仅为预览方向，不改动存储。</li></ul>
+<h2 id="sec-13">8. 扫码与识别</h2>
+<p>扫码页顶部有模式开关：<strong>扫描条码</strong> ↔ <strong>识别文字</strong>，两者共用一页、切换即换工作方式。</p>
+<h3 id="sec-14" class="m-h3">8.1 扫描条码</h3>
+<ul><li><strong>内嵌相机</strong>：进入扫码页页相机即自动就位——原生相机预览层精确嵌在页面取景框内（带 22dp 圆角裁切），取景框带四角红角标与往返扫描线；手电筒按钮在取景框内右上角，可在画面里直接开关闪光灯。页面其余部分照常显示与滚动；滚动页面时相机自动让位、停稳后归位。</li><li><strong>相机开关（严格两条件，无判定容差）</strong>：开启的唯一情况是<strong>页面在顶部且没有任何滑动</strong>（顶部判定 scrollTop=0，无容差）；页面离开顶部存在任意滑动——滚动、拖拽、顶部回弹——相机立即关闭，停止滑动回到顶部后自动恢复。仓库抽屉、结果弹窗等全屏遮挡出现时同样撤下，关闭后按同一规则恢复；<strong>点击手动输入框也会立即撤下相机</strong>（输入态无需取景）。顶部轻微触摸（拖拽位移 ≤12px 且未发生真实滚动）不会触发相机的开与关——避免填满屏幕的页面被“无感滑动”误关。<strong>相机关闭时取景框显示扫描图标与"上滑或点击扫描识别 / 对准条形码或二维码"（与识别文字界面同款样式），点击它页面自动回到顶部并开启相机——这是开启相机的唯一入口</strong>。相机启动失败不会崩溃，一律以提示形式反馈。</li><li><strong>让位的完整场景清单</strong>：①打开仓库抽屉；②扫码结果弹窗弹出；③页面发生真实滚动（内容超出屏幕时）。三者都会撤下相机；对应恢复时机分别是抽屉关闭、弹窗关闭、滚动停稳。内容不满一屏时滑动页面不会触发相机的开关。</li><li><strong>权限</strong>：首次使用会请求系统相机权限；拒绝后页面会提示到系统设置开启，不会反复弹窗。</li><li><strong>取景框内 UI 属于原生层</strong>：手电筒按钮与"对准条码即可识别"提示胶囊由原生相机浮层自己绘制（取景框区域被原生层覆盖，网页层画了也看不见），点击手电筒由原生直接切换闪光灯，不经网页中转。</li><li><strong>识别范围</strong>：EAN-13 / EAN-8 / UPC-A / UPC-E / Code128 / Code39 / Code93 / ITF / Codabar / QR / DataMatrix。</li><li><strong>命中流程</strong>：识别成功后相机撤下，弹出结果弹窗：显示条码内容与格式、本仓库已有的同条码物品（列出前 4 条，更多折叠）、联网查询结果（仅联网版，见第 9 章），并可一键"新建物品并填入"。结果弹窗出现时会有一次轻微震动反馈。</li><li><strong>结果弹窗</strong>：遮罩为全屏覆盖（含状态栏与导航条区域），视觉无割裂；查询结果不会被同码的重复上报冲掉（同码 5 秒内只认一次命中）。</li><li><strong>相册识别</strong>：不开相机也能从相册选图识别条码。</li><li><strong>手动输入</strong>：页面下方有手动输入框，直接键入条码查询，查询链路与扫码一致（联网版同样走三级兜底）。<strong>每次点击输入框都会立即撤下相机</strong>，并在键盘弹出动画的两个时点（约 0.35s / 0.7s）把输入框滚入可视区；若某些机型的 resize 被吞掉，应用会自动补一块与键盘等高的滚动空间并滚到底部——任意机型每次点击都抬升；<strong>收起键盘自动回到顶部并恢复相机</strong>。</li><li>对同一张画面原生层做了节流（约 1.2 秒内不重复上报同一批命中），避免连续弹窗。</li></ul>
+<h3 id="sec-15" class="m-h3">8.2 识别文字</h3>
+<ul><li><strong>两种入口</strong>：页面中央大按钮直接调起相机拍照，或从相册选图。</li><li><strong>识别引擎</strong>：原生 ML Kit 文字识别，指定中文模型。</li><li><strong>字段抽取</strong>：识别出的文本会按行解析，自动抽取名称、规格、净含量、保质期、生产日期等常见标签值，核心参数（名称、规格、数量、日期等）直接填入新建表单，无法归类的内容进入"临时字段"，可自行改 Key 保留或删除。</li></ul>
+<h2 id="sec-16">9. 联网查询（仅联网版）</h2>
+<p>默认关闭，保证隐私；开启后扫码命中会自动联网查询商品信息并在结果弹窗展示，可一键填入新物品。</p>
+<ul><li><strong>数据源一：默认库</strong>（GS1 - MXNZP - OFF）。设置页显示为"默认库"，内部按三级自动换源：先查 GS1 注册库（经第三方聚合接口转发中国物品编码中心注册数据，匿名有极小试用额度），失败自动转 MXNZP 商品条码库（免费档每秒 1 次、限频自动重试一次），仍无结果再查开源库 Open Food Facts；成功结果显示实际来源。填写自己的 GS1 API Key 可提升第一级额度。</li><li><strong>自动兜底（三级）</strong>：GS1 渠道失败（网络错误、额度用完、返回错误码）或无结果时，自动转查 <strong>MXNZP 商品条码库</strong>（国内商品覆盖好），仍无结果再查开源商品库 <strong>Open Food Facts</strong>（匿名免费），查询结果会标注实际来源。</li><li><strong>数据源二：自定义接口</strong>。填入包含 <code>{code}</code> 占位符的 URL 与可选请求头，适配任何自建 / 自购服务。</li><li><strong>超时</strong>：默认 8000 毫秒，可调（下限 2000 毫秒）。</li><li><strong>隐私边界</strong>：查询时只会把条码数字发送给所选服务；返回数据仅用于填充物品信息，应用不做任何留存与上报。离线版在编译期就不含此功能。</li></ul>
+<h2 id="sec-17">10. 多仓库</h2>
+<ul><li><strong>切换</strong>：点击顶栏「仓库」按钮，仓库列表会<strong>自屏幕左缘滑出</strong>（触发方式只有这一处，设置页的"当前仓库"也会打开同一抽屉）；抽屉内列出全部仓库（当前仓库置顶），每张卡片显示名称与种类数；名称过长时自动往返滚动、可手动拖动查看；卡片支持长按菜单（编辑 / 删除）。</li><li><strong>新建 / 编辑</strong>：仓库名称 + 备注。</li><li><strong>删除仓库</strong>：会<strong>同时删除仓库内的全部物品</strong>（这是硬删除，注意先导出备份），随后自动切换到剩余的第一个仓库；没有仓库时应用会引导创建。</li><li><strong>统计联动</strong>：仓库抽屉里的种类数、物品页四格状态卡，均实时反映当前仓库数据。</li><li>首次使用若未选择仓库，应用会强制先打开仓库抽屉完成创建 / 选择。</li></ul>
+<h2 id="sec-18">11. 分类与位置</h2>
+<ul><li><strong>默认分类</strong>：数码、工具、家居、服饰、耗材、办公、食品、其他，共 8 类。</li><li><strong>管理页</strong>（设置 → 物品参数 → 分类与位置）：可新建、改名、排序、删除分类与位置；删除时若仍有物品在使用，应用会给出相应处理提示。</li><li><strong>列表联动</strong>：物品筛选弹层中的分类 / 位置选项即来自这里；物品卡片上的分类胶囊按分类着色（每个分类有固定配色，深浅主题各自适配）。</li></ul>
+<h2 id="sec-19">12. 状态与筛选</h2>
+<p>状态是物品的<strong>派生标签</strong>，全部由字段实时计算，不占存储：</p>
+<div class="m-table"><table><thead><tr><th>状态</th><th>判定规则</th><th>色调</th></tr></thead><tbody><tr><td>在库</td><td>数量 &gt; 0</td><td>中性</td></tr><tr><td>低库存</td><td>0 &lt; 数量 ≤ 低库存阈值</td><td>琥珀警示</td></tr><tr><td>零库存</td><td>数量 = 0</td><td>红色危险</td></tr><tr><td>临期</td><td>未过期，且距截止日期 ≤ 临期阈值（月）</td><td>琥珀警示</td></tr><tr><td>过期</td><td>截止日期早于昨天（含 1 天宽限）</td><td>红色危险</td></tr><tr><td>无日期</td><td>未填截止日期</td><td>琥珀警示</td></tr><tr><td>无条码</td><td>没有条码</td><td>琥珀警示</td></tr><tr><td>有子项 / 无子项</td><td>名下是否存在批次子项</td><td>中性</td></tr></tbody></table></div>
+<p><strong>状态筛选页</strong>（设置 → 状态筛选）：控制物品页显示哪些状态、以及排列顺序；物品页顶部的四格统计卡也从这里启用 / 停用的状态中选择。低库存、临期、无日期、无条码等警示状态在卡片与胶囊上使用琥珀色，零库存与过期使用浅红底红字，全 app 统一。</p>
+<h2 id="sec-20">13. 日期与临期计算</h2>
+<ul><li>输入格式：<code>20260911</code> 或 <code>2026-09-11</code>，其他格式一律拒绝。</li><li>截止日期 = 生产日期 + 保质期月数（按"本地日历加月"计算，1 月 31 日 + 1 个月 = 2 月 28 日，不会跳到 3 月）。</li><li>过期：截止日期早于<strong>昨天</strong>（留 1 天宽限，当天到期不算过期）。</li><li>临期：未过期，且截止日期距今 ≤ 临期阈值（月），每个物品可单独设置阈值，默认 1 个月。</li><li>日期解析统一在"本地正午"锚定，避免时区差异导致跨天误判。</li></ul>
+<h2 id="sec-21">14. 导出与同步</h2>
+<p>入口：设置 → 导出与同步。支持选择导出范围：<strong>当前仓库</strong> 或 <strong>全部仓库</strong>；「包含图片」开关决定是否把图片本体打包进同步包 / 加密备份。</p>
+<p>表格列（CSV / XLSX / 面板通用）：层级、所属父项、条码、名称、分类、数量、单位、购入价、售价、币种、备注、低库存阈值、入库时间、更新时间、版本。行按"父项在前、子项紧随（└ 标记）"排列。</p>
+<h3 id="sec-22" class="m-h3">14.1 表格导出</h3>
+<ul><li><strong>CSV</strong>：单文件，UTF-8。</li><li>表格区三个导出按钮：<code>.CSV</code>、<code>.XLSX</code>、<code>图片.ZIP</code>（XLSX 表格 + inventory.json + images/ 图片文件夹）。</li><li><strong>Excel（XLSX）</strong>：多仓库时自动分工作表——第一张「全部」总表，其后每个仓库一张（仓库名作表名，非法字符自动清理）。</li></ul>
+<h3 id="sec-23" class="m-h3">14.2 含图 ZIP</h3>
+<p>把 XLSX 表格、inventory.json 原始数据和 <code>images/</code> 图片文件夹打包成一个 ZIP，适合归档。</p>
+<h3 id="sec-24" class="m-h3">14.3 同步包（JSON）</h3>
+<p><code>.json</code> 文件（schema 4），包含物品、仓库表（全仓导出时）与可选的图片本体。<strong>这是两台手机之间点对点同步的标准格式</strong>，合并规则见 14.5。</p>
+<h3 id="sec-25" class="m-h3">14.4 加密备份（.enc）</h3>
+<ul><li>算法：PBKDF2（120000 次 SHA-256）从口令派生密钥，AES-256-GCM 加密，随机盐与 IV，文件头带校验魔数。</li><li>包内含物品、仓库表与图片本体——口令 + 一个 .enc 文件即可完成换机。</li><li>导入时需要输入相同口令解密，应用会展示校验信息（数据类型、仓库与物品数量、导入目标），多仓数据导入单仓时会给出范围不一致的警示。</li></ul>
+<h3 id="sec-26" class="m-h3">14.5 同步合并规则（两台手机点对点对账）</h3>
+<ul><li>合并只作用于<strong>目标仓库</strong>（默认当前仓库），绝不波及其他仓库的物品。</li><li>按 <strong>id</strong> 匹配：本地不存在则新建；若该 id 已属于其他仓库，则分配新 id，不抢占。</li><li>条码匹配仅作为兜底：只有当该条码在本仓库<strong>唯一命中且是父项</strong>时才视为同一物品（子项批次绝不参与条码匹配，防止批次被合并进父项）。</li><li>双方都存在的物品：<code>updatedAt</code> 较新的一方胜出，逐字段覆盖并记录冲突清单（物品名、字段、双方旧值）供导入后查看；版本号取双方较大值 +1。</li><li>图片取并集；子项导入后会自动回连到在本仓库中的父项。</li></ul>
+<h3 id="sec-27" class="m-h3">14.6 文件名与保存位置</h3>
+<ul><li>单仓导出：<code>仓库名 + 日期</code>；全部仓库导出：<code>机型名 + 日期 + 多仓</code>（机型从系统信息读取）。</li><li>Android 上文件保存到 <code>Documents/LocalScan</code>，保存成功后 Toast 显示完整路径。</li></ul>
+<h3 id="sec-28" class="m-h3">14.7 合并结果与冲突清单</h3>
+<p>每次导入同步包 / 加密备份后，应用会给出合并统计：<strong>新建多少条、更新多少条、跳过多少条</strong>，以及一份逐字段的<strong>冲突清单</strong>（物品名、字段名、本地旧值、远端新值）。冲突的处理规则是"较新者胜"：更新时间更晚的一方覆盖字段，但整条记录的版本号只增不减，图片永远取双方并集——可以放心反复互导对账。</p>
+<h2 id="sec-29">15. 局域网 Web 面板</h2>
+<p>设置 → 数据 → 局域网 Web 面板，会把全部数据生成一个<strong>只读 HTML 快照文件</strong>（保存到本机，可随手通过局域网共享 / 网盘传到电脑浏览器打开）：</p>
+<ul><li>与 Excel 相同的多工作表形式：第一张「全部」总表 + 每仓库一张页签。</li></ul>
+<ul><li>顶部搜索框：按名称、条码、分类、备注实时过滤当前表。</li><li><strong>深浅色三态开关</strong>（页头按钮）：跟随系统 → 深色 → 浅色循环切换，选择记忆在浏览器里。</li><li>手机与电脑屏幕均已适配；表头吸顶、宽表横向滚动。</li><li>页面是纯静态快照——生成后数据不再变化，重新生成即可刷新。</li><li>离线版与联网版各自生成独立的面板文件（<code>localscan-webpanel.html</code> / <code>localscan-webpanel-online.html</code>），互不覆盖。</li><li>面板自带层级列（父项 → └ 子项），与 Excel 导出的父子排布一致，适合直接投屏盘点。</li><li>面板文件不包含任何脚本依赖与外部资源，单文件离线可用，也不会"回传"任何数据。</li></ul>
+<h2 id="sec-30">16. 设置</h2>
+<ul><li><strong>外观</strong>：主题（浅色 / 深色 / 跟随系统）；字体大小（小 / 标准 / 大 / 特大），全局同比缩放。</li><li><strong>仓库</strong>：当前仓库入口（打开仓库抽屉）。</li><li><strong>物品参数</strong>：分类与位置管理、状态筛选管理、自定义字段模板管理。</li><li><strong>联网查询</strong>（仅联网版显示）：总开关、数据源、API Key / 自定义接口配置、超时；详细行为见第 9 章。</li><li><strong>数据</strong>：导出与同步入口、<strong>回收站</strong>（查看 / 恢复 / 彻底删除已删物品）、局域网 Web 面板生成。</li><li><strong>危险操作 → 清空全部数据</strong>：删除所有仓库与物品并恢复示例数据。为防误触需要<strong>连续通过两道确认弹窗</strong>（第二道会明确提示仓库数与不可撤销性）。清空后数据无法找回，请先导出。</li><li><strong>关于</strong>：版本（点击进版本日志）、关于 App（代码结构占比、功能模块清单——可展开子功能并点击直达手册对应章节、技术栈、日期计算规则说明）。</li></ul>
+<h2 id="sec-31">17. 数据存储与隐私</h2>
+<ul><li>全部业务数据存放在 WebView 的 <strong>localStorage</strong>（物品、仓库、图片 dataURL、主题、筛选配置、查询配置等），应用启动时载入内存、写入时统一落盘。</li><li>没有任何账号系统、云服务、统计 SDK 或第三方数据上报；唯一可能的联网行为是联网版中<strong>你主动开启</strong>的条码查询。</li><li>localStorage 的容量上限（通常约 5–10MB，因设备而异）由系统决定；图片经过 1080px / ≤500KB 压缩，日常几百件物品含图使用是安全的。数据量大后建议定期导出含图 ZIP 归档。</li><li>应用内置示例数据与 v1 旧版数据自动迁移逻辑；升级版本不会丢数据。</li></ul>
+<h2 id="sec-32">18. 导航与手势</h2>
+<ul><li><strong>系统返回键 / 侧滑返回手势</strong>：优先关闭仓库抽屉等浮层 → 二级页回退到来源页 → 一级页回到物品页。</li><li><strong>双击顶栏</strong>：任意页面双击顶部栏，平滑回到该页顶部。</li><li>列表滚动到底 / 顶即停（到边即停，无橡皮筋效果），应用已阻断浏览器把滚动传导给外层造成的"整页晃动"。</li><li>物品名称过长时自动往返滚动展示，按住或手动拖动即可暂停接管（物品列表、详情页标题、仓库抽屉同款行为）。</li><li><strong>返回定位</strong>：从详情 / 编辑页返回时，上一页恢复离开时的滚动位置；点击进入新页面则从顶部开始。进入下级页面（详情、手册）后返回，出发页的功能模块 / 子项展开状态保留；切往同级或上级页面则收回展开。</li><li><strong>文本选择</strong>：长按的语义是触发交互（长按菜单、拖动查看），物品卡片、仓库卡片、按钮等控件上的文字不会触发系统文本选择；需要复制的内容不受影响——物品详情页的字段值与条码、手册正文、版本日志、扫码查询结果等仍可长按选择复制。</li></ul>
+<h2 id="sec-33">19. 常见问题</h2>
+<p><strong>Q：换手机怎么迁移数据？</strong></p>
+<p>在旧手机导出"全部仓库 + 包含图片"的同步包或加密备份，新手机导入即可——图片本体在包里，不会出现空占位。</p><p><strong>Q：长按文字为什么没有出现复制菜单？</strong></p><p>长按被保留给快捷菜单。需要复制的文本请到物品详情页的字段值与条码、手册正文、版本日志等处长按选择。</p>
+<p><strong>Q：扫码结果商品信息查不到？</strong></p>
+<p>确认是联网版且查询已开启；GS1 渠道匿名额度有限，应用会依次自动转查 MXNZP 商品条码库与开源库兜底，三个来源都未收录该商品才显示无结果。MXNZP 免费档有每秒 1 次的频率限制，遇到限频响应应用会自动延时重试一次；其收录含编码中心样例数据，与官网演示工具的查询结果可能不同（以 App 内标注的来源为准）。填写 API Key 可提高 GS1 渠道额度。</p>
+<p><strong>Q：删除仓库会发生什么？</strong></p>
+<p>该仓库及其全部物品一并删除（硬删除），请先导出。删除物品为软删除。</p>
+<p><strong>Q：同一商品想记多个批次？</strong></p>
+<p>直接再扫一次同一条码并选择"新建批次"，各批次记录各自的生产日期、数量，父项卡片展开即可看到全部批次。</p>
+<p><strong>Q：识别文字能识别什么？</strong></p>
+<p>包装上的名称、规格、净含量、保质期、生产日期等印刷文字（中文模型）。识别结果的核心字段自动填入新建表单，其余进入临时字段。</p>
+<p><strong>Q：数据会不会被上传？</strong></p>
+<p>离线版没有联网代码；联网版只有在查询开关打开时才会把<strong>条码数字</strong>发送给你选择的数据源，其余数据不出设备。</p>
+<p><strong>Q：物品多了会卡吗？</strong></p>
+<p>界面按仓库隔离、列表按需渲染，几百件物品规模流畅；localStorage 容量以图片为大头（单张已压到 500KB 内）。数据量大时建议分仓库管理，并定期导出含图 ZIP 归档。</p>
+<p><strong>Q：误触了"清空全部数据"怎么办？</strong></p>
+<p>共两道确认弹窗，全部通过才会执行，执行后恢复示例数据且无法撤销——所以重要数据请养成导出习惯（加密备份最稳妥）。</p>
+<p><strong>Q：为什么有的物品名称在列表里会滚动？</strong></p>
+<p>名称超出卡片宽度时自动往返滚动展示，按住即可暂停、手动拖动查看完整名称；这是展示行为，不影响数据。</p>
+<p><strong>Q：识别文字拍出来是英文包装怎么办？</strong></p>
+<p>文字识别使用中文模型，对中文印刷体效果最好；纯英文包装可尝试识别，抽取规则主要面向中文标签（名称 / 规格 / 净含量 / 保质期 / 生产日期）。</p>
+<hr/>
+<p>*手册基于 v1.10.0 源码逐模块核对编写（数据层 db.ts、类型 types.ts、导出 export.ts、同步 sync.ts、条码查询 barcode-lookup.ts、文字识别 ocr.ts、图片 image.ts、扫码 native-scan / camera-overlay、各页面与设置项）。*</p></div></div>
+          <aside class="wave-toc">
+            <input id="manualSearch" type="search" placeholder="搜索手册…" enterkeyhint="search"
+              style="width:100%;margin:0 0 0.5rem;padding:0.5rem 0.7rem;border-radius:9px;border:1px solid var(--line);background:var(--bg-2);color:var(--text);font:inherit;font-size:0.84rem;outline:none" />
+            <div class="manual-ctrl">
+              <button class="mc-btn" id="mcPrev" title="上一处" disabled><span class="up"></span></button>
+              <span class="mc-count" id="mcCount">0 / 0</span>
+              <button class="mc-btn" id="mcNext" title="下一处" disabled><span class="down"></span></button>
+            </div>
+            <ul id="tocManual"></ul>
+          </aside>
+        </div>
+      </div>
+    </div>
+    <!-- ================= 设计方案（design.html 嵌入） ================= -->
+    <div class="view" id="view-design">
+      <iframe id="designFrame" src="./design.html" title="码上记 App 设计方案"></iframe>
+      <aside class="dot-nav" id="tocDesign"></aside>
+    </div>
   </main>
 
-  <footer>
-    码上记 LocalScan · 数据默认不出设备<br />
-    作者 xhowu · AI 工具 Xiaomi MIMO<br />
-    <a href="https://github.com/xhowu/LocalScan">github.com/xhowu/LocalScan</a>
+  <footer class="site-footer">
+    <p>码上记 LocalScan · 数据默认不出设备</p>
+    <p class="sep">—</p>
+    <p>作者 · xhowu</p>
+    <p><a href="https://github.com/xhowu/LocalScan" target="_blank" rel="noreferrer">项目地址 · https://github.com/xhowu/LocalScan</a></p>
+    <p>AI · MIMO &amp; DeepSeek &amp; GLM</p>
+    <p>注 · 所有代码均由AI生成</p>
   </footer>
+
+<script>
+window.__LOG__ = [{"version":"1.10.0","date":"2026-09-25","kind":"MINOR · 关于页功能模块 / 手册直达 / 返回定位","items":["关于页「功能」改版：15 个功能模块可展开，子功能标注首发版本，点击直达手册对应章节","返回定位重做：进入下级页面（详情 / 手册）返回后保持出发页的位置与展开状态，切往同级页面则收回展开","长按策略明确：卡片、按钮等控件文字不再触发系统文本选择，详情字段、条码、手册正文等仍可长按复制","扫码结果弹窗出现时轻微震动","修复仓库删除确认弹窗被仓库抽屉遮挡的问题","手册同步：补齐安全区适配、文本选择、震动反馈说明与常见问题","清理回弹时代残留的注释与样式"]},{"version":"1.9.9","date":"2026-09-24","kind":"PATCH · 手册搜索回车跳转 / 查询说明精简","items":["手册搜索：去掉输入框下方的命中计数行，输入后按回车立刻前往第一处命中并收起键盘","设置页联网查询数据源说明精简为「默认库：GS1 - MXNZP - OFF」，与数据源标题对齐","全局新增双击顶栏回到顶部","手册搜索当前命中处高亮改为实色橙色（透明橙在深色模式下不可读）"]},{"version":"1.9.8","date":"2026-09-24","kind":"PATCH · 键盘适配修正 / 微滑阈值 / 手册控件悬浮","items":["键盘适配修正：windowSoftInputMode 由 adjustNothing 改为 adjustResize，聚焦后固定时点滚入可视区；对 resize 被吞掉的机型自动补等高滚动空间兜底","顶部微滑不再误关相机：拖拽累计位移超过 12px 或发生真实滚动才关闭，两条件模型不变","手册搜索跳转控件改为悬浮，不再挤占正文高度","结果弹窗与查询文案清理，移除已不准确的来源描述"]},{"version":"1.9.7","date":"2026-09-24","kind":"PATCH · 输入框聚焦即关相机 / 弹窗与设置文案对齐","items":["点击手动输入框立即撤下相机，聚焦期间不允许被重新拉起","键盘弹出后在两个时点把输入框滚入可视区，每次点击都生效","取景占位框改为扫描图标 +「上滑或点击扫描识别 / 对准条形码或二维码」","结果弹窗文案对齐：\"可新建物品\"、\"查询到以下信息\"、\"新建物品并填入以上信息\"","设置页数据源\"GS1 注册库\"改名\"默认库\"，说明分别移入对应配置下方"]},{"version":"1.9.6","date":"2026-09-24","kind":"PATCH · 相机严格状态机 / 占位框统一 / 查询链路核查","items":["相机启停收敛为唯一状态机：仅\"页面在顶部（scrollTop=0）且无任何滑动\"时开启，离开顶部立即关闭","修复相机关不掉：遮挡恢复路径不检查滚动位置，任何 DOM 变化都会重新拉起相机","相机关闭时取景框与识别文字界面同款，点击占位框回顶并开启相机","条码查询链路核查：无重复执行、无结果覆盖"]},{"version":"1.9.5","date":"2026-09-24","kind":"PATCH · 相机双通道判定 / 键盘通用适配 / 手册细节","items":["相机判定加入触摸手势通道：顶部下拉回弹不产生滚动事件也能关闭相机","手动输入走完整三级兜底查询链路；MXNZP 限频自动重试一次","手册搜索跳转控件改 SVG 箭头，命中处高亮改透明橙","关于页 Hero 卡与手册标题统一「码上记『LocalScan』」"]},{"version":"1.9.4","date":"2026-09-24","kind":"PATCH · 查询三级兜底 / 手册细节","items":["联网查询三级兜底：GS1 注册库 → MXNZP 商品条码库 → 开源库 Open Food Facts","扫码相机判定加顶部微滚容差；手册跳转控件与浮球目录对齐、子项行减矮","设置页联网查询说明移入卡片内对齐"]},{"version":"1.9.3","date":"2026-09-24","kind":"PATCH · 相机位置开关 / 面板互斥修复 / 手册观感","items":["相机按滚动位置开关：离开顶部关闭、回到顶部恢复","修复离线版与联网版 Web 面板互相覆盖导致无法再生成，改为各自独立文件名","手册恢复大标题、浮球目录条加高；关于页徽章左对齐、描述列加宽"]},{"version":"1.9.2","date":"2026-09-24","kind":"PATCH · 查询稳定性 / 手册体验 / 细节打磨","items":["修复联网查询结果被重复执行的查询覆盖为\"未查询到\"","手册搜索改全文匹配、荧光高亮；目录与浮球样式统一、子项可展开跳转","回收站深色模式边缘清晰；同码列表与按钮间距加大"]},{"version":"1.9.1","date":"2026-09-23","kind":"PATCH · 返回定位 / 日期校验改版 / 弹窗与查询修正","items":["返回上一页恢复离开时的滚动位置","日期即时校验改版：年份 0000–9999、月日按真实天数（含闰年）细分提示，晚于今天提示间隔，有效绿字回显截止日期","修复结果弹窗遮罩未盖满状态栏 / 导航条、查询结果被同码重复命中冲掉","移除不可靠的扫码命中震动；表格导出按钮更名\"图片.ZIP\""]},{"version":"1.9.0","date":"2026-09-23","kind":"MINOR · 回收站 / 内置使用手册 / 详情页与关于页打磨","items":["新增回收站：软删除物品可查看、恢复（连带子项批次）或彻底删除","新增内置 App 使用手册：目录跳转、关键词搜索，与实现逐条对应","详情页状态胶囊行；编辑页日期即时校验；关于页改版（Hero 卡、版本徽章、技术栈与计算规则）","仓库抽屉长名称滚动可拖动；局域网面板深浅色三态开关"]},{"version":"1.8.7","date":"2026-09-23","kind":"PATCH · 修复与打磨","items":["修复识别文字页内容不满一屏仍可滚动（最后一个元素的底边距逃逸出页面容器混入滚动区）","扫码页超屏滚动时相机改为\"停稳即恢复\"：滚动结束事件立即归位，不再频繁开关","联网版条码查询：GS1 渠道失败（含匿名额度用完）自动改查开源库 Open Food Facts，无需 Key","局域网 Web 面板重做：搜索过滤、深色跟随系统、手机/电脑自适应、表头吸顶与横向滚动","版本日志按 MAJOR/MINOR/PATCH 重新整理，移除反复横跳与未落地的记录"]},{"version":"1.8.6","date":"2026-09-23","kind":"PATCH · 移除回弹 / 相机调度修复","items":["全局移除回弹效果：澎湃 OS 3 上触底回弹卡顿多轮修复未能根治，到顶/到底回归系统默认（到边即停）","修复仓库抽屉开着时相机仍浮于顶层且可扫码：抽屉/弹窗渲染在页面树内，遮挡检测改为全树监听，相机启动入口统一守卫","修复关闭结果弹窗后取景框黑屏不恢复","层级修正：仓库抽屉盖过结果弹窗，长按菜单高于抽屉，提示保持最顶","扫码页超屏滚动时相机自动让位、停稳归位（原生浮层追不上合成器滚动）"]},{"version":"1.8.0","date":"2026-09-23","kind":"MINOR · 扫码页内嵌相机","items":["扫码架构重做：原生相机预览浮层精确嵌在扫码页取景框里，WebView 保持不透明 —— 无透明混层、无状态栏闪烁","取景卡按原版式：全宽大卡、22dp 圆角裁切，四角红标与扫描线内缩为取景区","手电筒（白圆钮）在框内右上、提示胶囊在框内底部，由原生浮层绘制","识别命中回传；命中后相机暂停，关闭结果自动恢复"]},{"version":"1.7.1","date":"2026-09-22","kind":"PATCH · 扫码闪退修复","items":["修复点击开始扫码闪退：取景框布局参数类型强转错误（父容器不匹配）导致 ClassCastException；扫码页任何异常改为提示回传，不再崩溃","修复长按弹窗被压到列表图层下面","「包含图片」开关移到导出标题行，与设置页样式一致"]},{"version":"1.7.0","date":"2026-09-22","kind":"MINOR · 扫码全屏重做 / 换机迁移 / 表格分表","items":["扫码重做为原生全屏页：相机、识别、UI 全在原生 Activity，WebView 不参与（规避透明混层的状态栏闪烁）","换机全量迁移：同步包与加密备份可打包图片本体，导入先还原图片再合并物品","导出表格与面板按「父项 → 子项」排布；多仓库导出为多工作表（Excel 多 sheet）","同条码只允许两层：子项不能再挂子项，历史孙项自动平铺到根","名称自动滚动改为恒定速度、支持手动双向拖动"]},{"version":"1.6.0","date":"2026-09-22","kind":"MINOR · 分类配色 / 全仓导出 / 列表细节","items":["分类配色统一（服饰红紫、食品绿、办公红、工具黄、数码蓝、耗材橙、家居棕、其他灰）","扫码改为点击取景框进入，消除进入瞬间的黑屏与状态栏闪烁","导出新增范围开关（当前 / 全部仓库），全仓导入按原仓库还原","导入前新增校验弹窗：数据类型、数量、目标仓库与范围警示","修复同步导入丢失物品子项（子项只按 id 匹配）","子项连线结构重做：一个灰块容器 + 中位圆点长条，贴近设计稿"]},{"version":"1.5.1","date":"2026-09-15","kind":"PATCH · 真机显示与手感","items":["顶栏/底栏/抽屉按系统安全区自动让位；修复换机后顶部被状态栏遮挡","修复浅色模式上下黑边、深色模式顶部白条（原生窗口底色跟随主题）","设置新增字体大小（小/标准/大/特大），全局同比缩放","物品名称过长自动往返滚动，可手动横向滑动查看","图片旋转语义区分：编辑页旋转写回图片，详情页仅预览旋转"]},{"version":"1.5.0","date":"2026-09-14","kind":"MINOR · 多批次 / 文字识别 / 双版本","items":["同条码可建多个批次子项，各自记录生产日期与数量；列表按父项归组","物品详情图片点击放大：双指缩放、双击、左右切换、下拉关闭","拍照/相册文字识别（ML Kit OCR）：自动抽取名称、规格、净含量、日期","构建分离：离线版（无任何联网）与联网版（独立包名，可共存）","联网版扫码命中后查询商品注册信息，一键新建并填入","补齐 Android 返回键/手势：抽屉优先关闭，栈内页回退"]},{"version":"1.4.0","date":"2026-09-12","kind":"MINOR · 收敛体验","items":["状态卡片与胶囊配色统一对齐列表","编辑保存/取消 replace 导航，返回层级不再回退到编辑页","图片：右上角删除、底部排序；仓库侧滑打开即刷新状态","清理死代码，版本日志与关于页与实现对齐"]},{"version":"1.3.0","date":"2026-09-11","kind":"MINOR · 临期体系与可管理筛选","items":["生产日期 + 保质期（月）自动计算截止日期；临期阈值字段","物品统计：在库 / 低库存 / 临期 / 过期，可点选筛选","状态筛选可排序、隐藏、恢复；首页四格卡片可配置","位置字段与分类位置管理；筛选记忆","综合导出单份 ZIP；Toast 显示保存路径"]},{"version":"1.2.0","date":"2026-09-11","kind":"MINOR · 原生扫码与壳层固定","items":["接入 Google ML Kit 原生扫码（EAN/UPC/Code128/QR）","相册读图识别；闪光灯；结果弹窗","顶底栏固定并与系统栏同色；扫描页内取景框","多仓库左缘滑出；导出写入 Documents/LocalScan","暗色模式；临时字段与固定字段模板"]},{"version":"1.1.0","date":"2026-09-10","kind":"MINOR · 多仓库与图片","items":["多仓库切换与统计","长按卡片编辑删除；拍照上传与图片压缩","导出/同步成功失败提示；加密备份入口"]},{"version":"1.0.0","date":"2026-09-10","kind":"MAJOR · 首个可用版本","items":["本地物品库存 CRUD（无账号、无云）","条码扫描与相册识别入口","CSV / XLSX / 含图 ZIP 导出","JSON 同步包与 AES-GCM 加密备份","局域网只读 Web 面板快照"]}];
+</script>
+<script>
+/* ================= 数据 ================= */
+const CMP = [
+  ['物品管理', ['✓', 'ok', ' 基础版'], ['✓', 'ok', ' + 长按菜单 / 图片查看器 / 跑马灯 / 旋转语义']],
+  ['扫码', ['✓', 'ok', ' 相机 + 相册 + 手动输入'], ['✓', 'ok', ' + 内嵌相机浮层 / 严格状态机 / 键盘适配 / 弹窗震动']],
+  ['日期与临期', ['✓', 'ok', ' 自动推算 + 阈值'], ['✓', 'ok', ' + 输入即时校验（天数 / 闰年 / 超前提示）']],
+  ['状态筛选', ['✓', 'ok', ''], ['✓', 'ok', ' 同等能力']],
+  ['批次子项', ['—', 'no', ''], ['✓', 'ok', ' 同条码多批次']],
+  ['联网查询（联网版）', ['—', 'no', ''], ['✓', 'ok', ' 三级兜底，默认关闭']],
+  ['文字识别', ['—', 'no', ''], ['✓', 'ok', ' ML Kit 中文 OCR']],
+  ['多仓库', ['✓', 'ok', ''], ['✓', 'ok', ' + 全仓导出按原仓库还原']],
+  ['分类与模板', ['部分', 'part', ' 分类位置'], ['✓', 'ok', ' + 临时字段与固定字段模板']],
+  ['导出', ['✓', 'ok', ' CSV / XLSX / ZIP'], ['✓', 'ok', ' + 范围开关 / 多工作表分表']],
+  ['同步备份', ['✓', 'ok', ' JSON / AES-GCM'], ['✓', 'ok', ' + 导入校验 / 换机全量迁移（含图）']],
+  ['局域网面板', ['✓', 'ok', ' 基础快照'], ['✓', 'ok', ' + 搜索 / 深色 / 自适应']],
+  ['回收站', ['—', 'no', ''], ['✓', 'ok', ' 软删除可恢复']],
+  ['内置手册', ['—', 'no', ''], ['✓', 'ok', ' 全功能说明 + 搜索']],
+  ['显示与操作', ['部分', 'part', ' 深浅色主题'], ['✓', 'ok', ' + 字体大小 / 返回键手势 / 双击回顶 / 文本选择策略 / 返回定位']],
+];
+const M140 = [
+  ['物品台账', '名称、条码、分类、位置、数量与财务信息；图片压缩 / 删除 / 排序；长按卡片快捷菜单。',
+    ['名称、条码、分类、位置、数量、单位、购入价 / 售价、币种、备注等固定字段', '图片自动压缩，可删除与排序', '长按卡片弹出快捷菜单（编辑 / 删除）']],
+  ['扫码建档', 'Android 上 Google ML Kit 相机 / 相册识别；Web 兜底 zxing + jsQR。',
+    ['相机取景框 + 闪光灯开关', '相册读图识别', '结果弹窗展示同码物品，可直接新建', '手动输入条码查询']],
+  ['多仓库', '数据按仓库隔离，侧滑切换。',
+    ['左缘滑出的仓库抽屉', '状态卡片与物品页四格统计同步', '导出与同步绑定当前仓库']],
+  ['分类位置', '分类与位置可完全自定义。',
+    ['新建、改名、排序、删除', '列表筛选并记忆选择']],
+  ['临期体系', '日期驱动的库存预警。',
+    ['生产日期 + 保质期（月）自动算截止日期', '临期阈值驱动在库 / 临期 / 过期统计', '按本地日历加月，不跨月错位']],
+  ['状态筛选', '多维状态，全部实时计算不占存储。',
+    ['在库 / 低库存 / 零库存 / 临期 / 过期 / 无日期 / 有条码 / 无条码 / 近 1 天 / 近 1 周 / 近 1 月新增', '状态可排序、隐藏、恢复', '首页四格统计卡可配置']],
+  ['导出', '全部数据可带走。',
+    ['CSV / XLSX / 含图 ZIP', '综合导出单份 ZIP', 'Android 保存到 Documents/LocalScan']],
+  ['同步备份', '点对点，无云端。',
+    ['JSON 同步包合并（id / 条码匹配，较新者胜）', 'AES-GCM 加密备份（.enc）', '局域网只读 Web 面板快照']],
+];
+const M1100 = [
+  ['物品管理', 'CRUD 与数量输入；长按快捷菜单；图片压缩 / 删除 / 排序；图片查看器（双指缩放 / 双击 / 切换）；名称跑马灯；旋转语义区分。'],
+  ['扫码', 'ML Kit 原生识别（EAN/UPC/Code128/QR 等）；相机 / 相册 / 闪光灯 / 结果弹窗 / 手动输入；内嵌相机浮层（WebView 保持不透明）；相机严格状态机；聚焦即关相机与键盘适配；结果弹窗轻微震动。'],
+  ['日期与临期', '生产 + 保质月 → 截止；临期阈值可按物品设置；输入即时校验（天数 / 闰年 / 超前提示）。'],
+  ['状态筛选', '在库 / 低库存 / 零库存 / 临期 / 过期 / 无日期 / 无条码；可排序 / 隐藏 / 恢复；首页四格卡片可配置。'],
+  ['批次子项', '同条码多批次，各自日期与数量；父项归组 · 详情互跳 · 重复提示；子项两层限制（孙项自动平铺）。'],
+  ['联网查询（联网版）', '扫码命中查询商品信息；GS1 → MXNZP → OFF 三级兜底；手动输入同链路；默认关闭。'],
+  ['文字识别', '拍照 / 相册 ML Kit 中文 OCR；自动抽取名称 / 规格 / 净含量 / 日期。'],
+  ['多仓库', '抽屉切换（顶栏按钮，左缘滑出）；状态卡片与物品页同步；全仓导出按原仓库还原。'],
+  ['分类与模板', '临时字段与固定字段模板；位置字段与分类位置管理。'],
+  ['导出', 'CSV / XLSX 表格导出；含图 ZIP（表格 + 数据 + 图片打包）；范围开关（当前 / 全部仓库）；多仓库自动分工作表。'],
+  ['同步备份', 'JSON 同步包合并；AES-GCM 加密备份；导入前校验弹窗；换机全量迁移（图片本体随包）。'],
+  ['局域网面板', '只读 HTML 快照（多 sheet 页签）；搜索 / 自适应 / 表头吸顶；深浅色三态开关；双版本独立文件名互斥。'],
+  ['回收站', '软删除物品集中查看；恢复（父项连带子项）/ 彻底删除。'],
+  ['手册', '内置全功能说明 · 目录跳转；全文搜索荧光高亮；搜索控件悬浮化；回车跳第一处命中。'],
+  ['显示与操作', '深浅色主题；Android 返回键 / 手势导航；字体大小四档；安全区适配；双击顶栏回顶；长按语义区分（控件不可选，内容可复制）；返回定位（下级返回保留位置与展开，同级切走则收回）。'],
+];
+const GH = 'https://github.com/xhowu/LocalScan';
+
+/* ================= 渲染 ================= */
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+
+// 对比表（首页 + 两个介绍页共用数据）
+$('#cmpBody').innerHTML = CMP.map((r) =>
+  `<tr><td>${r[0]}</td><td data-l="v1.4.0"><span class="${r[1][1]}">${r[1][0]}</span>${r[1][2]}</td><td data-l="v1.10.0"><span class="${r[2][1]}">${r[2][0]}</span>${r[2][2]}</td></tr>`).join('');
+
+function cmpTableHTML() {
+  return `<table class="cmp-table"><thead><tr><th>功能模块</th><th>v1.4.0</th><th>v1.10.0</th></tr></thead><tbody>${
+    CMP.map((r) => `<tr><td>${r[0]}</td><td data-l="v1.4.0"><span class="${r[1][1]}">${r[1][0]}</span>${r[1][2]}</td><td data-l="v1.10.0"><span class="${r[2][1]}">${r[2][0]}</span>${r[2][2]}</td></tr>`).join('')
+  }</tbody></table>`;
+}
+
+// 介绍页渲染：功能节进 intro-main 框；下载 / 离线联网 / 对比为独立圆角框（静态写在 HTML）
+const GHDL = 'https://github.com/xhowu/LocalScan/releases/download';
+function renderIntro(viewId, tocId, mods) {
+  $('#' + viewId).innerHTML = mods.map((m, i) => {
+    const body = m[2]
+      ? `<ul>${m[2].map((x) => `<li>${x}</li>`).join('')}</ul>`
+      : `<p>${m[1]}</p>`;
+    return `<section class="d-sec ${i % 2 ? 'alt' : ''} reveal" id="m-${viewId}-${i}"><p class="idx">${String(i + 1).padStart(2, '0')} / ${mods.length}</p><h2>${m[0]}</h2>${body}</section>`;
+  }).join('');
+  // 功能目录条（此前遗漏，导致目录里只剩“下载/对比”）
+  $('#' + tocId).innerHTML = mods.map((m, i) =>
+    `<li><button class="wave-item" data-sec="m-${viewId}-${i}"><span class="eq"><i></i><i></i><i></i><i></i><i></i></span>${m[0]}</button></li>`).join('');
+  $$('#' + tocId + ' .wave-item').forEach((b) => b.addEventListener('click', () => {
+    document.getElementById(b.dataset.sec)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }));
+}
+const DL1100 = [
+  ['离线版', 'LocalScan-v1.10.0.apk', 'universal', '75MB'],
+  ['离线版', 'LocalScan-v1.10.0-arm64.apk', 'arm64-v8a', '29.5MB'],
+  ['离线版', 'LocalScan-v1.10.0-armv7.apk', 'armeabi-v7a', '23.5MB'],
+  ['离线版', 'LocalScan-v1.10.0-x86_64.apk', 'x86_64', '31MB'],
+];
+const DL1100ON = [
+  ['联网版', 'LocalScan-v1.10.0-online.apk', 'universal', '75MB'],
+  ['联网版', 'LocalScan-v1.10.0-online-arm64.apk', 'arm64-v8a', '29.5MB'],
+  ['联网版', 'LocalScan-v1.10.0-online-armv7.apk', 'armeabi-v7a', '23.5MB'],
+  ['联网版', 'LocalScan-v1.10.0-online-x86_64.apk', 'x86_64', '31MB'],
+];
+const dlRows = (list) => list.map((d) =>
+  `<div class="dl-row"><span class="dl-name">${d[2]}<span class="dl-abi">${d[0]}</span></span><span><span class="sz">${d[3]}</span><a class="mono" href="${GHDL}/v1.10.0/${encodeURIComponent(d[1])}" download>下载 ↓</a></span></div>`).join('');
+renderIntro('intro140', 'toc140', M140);
+renderIntro('intro1100', 'toc1100', M1100);
+{
+  const off = $('#dl-1100'); const ps = $$('.dl-group', off);
+  ps[0].insertAdjacentHTML('afterend', dlRows(DL1100));
+  ps[1].insertAdjacentHTML('afterend', dlRows(DL1100ON));
+}
+$('#cmp-140').insertAdjacentHTML('beforeend', cmpTableHTML());
+$('#cmp-1100').insertAdjacentHTML('beforeend', cmpTableHTML());
+// 目录追加：间隔线 + 下载/对比条目
+function tocExtras(tocId, entries) {
+  const sep = '<li class="toc-sep"></li>';
+  $('#' + tocId).innerHTML += entries.map(([t, id], i) =>
+    `${i === 0 ? sep : ''}<li><button class="wave-item" data-sec="${id}"><span class="eq"><i></i><i></i><i></i><i></i><i></i></span>${t}</button></li>`).join('');
+  $$('#' + tocId + ' .wave-item').forEach((b) => {
+    if (b.dataset.bound) return; b.dataset.bound = '1';
+    b.addEventListener('click', () => {
+      document.getElementById(b.dataset.sec)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+}
+tocExtras('toc140', [['下载', 'dl-140'], ['版本对比', 'cmp-140']]);
+tocExtras('toc1100', [['离线版与联网版', 'ol-1100'], ['下载', 'dl-1100'], ['版本对比', 'cmp-1100']]);
+
+// 版本日志
+$('#logList').innerHTML = window.__LOG__.map((v) =>
+  `<article class="log-card" id="log-${v.version}"><div class="log-head"><h2 class="mono">v${v.version}</h2><time>${v.date}</time>${
+    v.version === '1.10.0' ? '<span class="pill seal">当前版本</span>' : ''
+  }</div><p class="log-kind"><span class="pill ${v.kind.startsWith('MINOR') ? 'mint' : v.kind.startsWith('MAJOR') ? 'seal' : 'amber'}">${v.kind.split(' · ')[0]}</span> <span class="muted" style="font-size:0.85rem">${v.kind}</span></p><ul>${v.items.map((x) => `<li>${x}</li>`).join('')}</ul></article>`).join('');
+// 日志音波目录
+$('#tocLog').innerHTML = window.__LOG__.map((v) =>
+  `<li><button class="wave-item" data-sec="log-${v.version}"><span class="eq"><i></i><i></i><i></i><i></i><i></i></span>v${v.version}<span class="sz mono" style="margin-left:auto;font-size:0.68rem">${v.date.slice(5)}</span></button></li>`).join('');
+$$('#tocLog .wave-item').forEach((b) => b.addEventListener('click', () => {
+  document.getElementById(b.dataset.sec)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}));
+
+/* ================= 路由与交互 ================= */
+const VIEWS = { '#/': 'view-home', '#/intro-140': 'view-intro-140', '#/intro-1100': 'view-intro-1100', '#/log': 'view-log', '#/manual': 'view-manual', '#/design': 'view-design' };
+function currentRoute() {
+  const h = location.hash || '#/';
+  return VIEWS[h] ? h : '#/';
+}
+function applyRoute() {
+  const r = currentRoute();
+  $$('.view').forEach((v) => v.classList.toggle('on', v.id === VIEWS[r]));
+  $$('.nav-btn[data-go]').forEach((b) => b.classList.toggle('active', b.dataset.go === r));
+  // 下拉父项的 active：进入产品介绍页时「产品介绍」亮红
+  const introBtn = $('[data-drop] .nav-btn[data-drop-btn]');
+  if (introBtn) introBtn.classList.toggle('active', r === '#/intro-140' || r === '#/intro-1100');
+  const aboutBtn = $('#navAboutBtn');
+  if (aboutBtn) aboutBtn.classList.toggle('active', r === '#/design');
+  closeDrops();
+  if (window.__closeMenu) window.__closeMenu();
+  const activeView = document.getElementById(VIEWS[r]);
+  if (window.__syncTocSheet) window.__syncTocSheet(r === '#/design' ? null : activeView);
+  document.querySelector('.site-footer').style.display = r === '#/design' ? 'none' : '';
+  window.scrollTo({ top: 0 });
+  // 置顶之后再执行落点滚动（否则会被这里的 scrollTo(0) 冲到顶部）
+  if (pendingScroll) {
+    const fn = pendingScroll;
+    pendingScroll = null;
+    requestAnimationFrame(() => requestAnimationFrame(fn));
+  }
+}
+let pendingScroll = null; // 路由切换后的落点（在 applyRoute 置顶之后执行，避免被 scrollTo(0) 冲掉）
+function navTo(hash, after) {
+  if (after) pendingScroll = after;
+  if (currentRoute() === hash) applyRoute(); else location.hash = hash;
+}
+window.addEventListener('hashchange', applyRoute);
+
+// 下拉菜单（点击展开 / 点击外部收起；桌面 hover 也展开）
+// 下拉菜单（点击展开 / 点击外部收起；桌面 hover 也展开）+ 全页模糊遮罩
+const dropMask = $('#dropMask');
+function syncMask() {
+  const anyOpen = $$('[data-drop].open[data-mask]').length > 0;
+  dropMask.classList.toggle('on', anyOpen);
+}
+$$('[data-drop]').forEach((item) => {
+  const btn = $('[data-drop-btn]', item);
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const was = item.classList.contains('open');
+    closeDrops();
+    if (!was) item.classList.add('open');
+    syncMask();
+  });
+  item.addEventListener('pointerenter', () => { if (matchMedia('(hover:hover)').matches) { closeDrops(); item.classList.add('open'); syncMask(); } });
+  item.addEventListener('pointerleave', () => { if (matchMedia('(hover:hover)').matches) { item.classList.remove('open'); syncMask(); } });
+});
+function closeDrops() {
+  $$('[data-drop].open').forEach((d) => d.classList.remove('open'));
+  $$('.cap-item.open').forEach((d) => d.classList.remove('open'));
+  syncMask();
+}
+document.addEventListener('click', () => closeDrops());
+
+// 首页 v1.10.0 下载：宽屏 hover 面板；窄屏点击开底部抽屉（全部包体完整可达）
+{
+  const item = $('#cap1100');
+  const btn = $('[data-cap-btn]', item);
+  const isNarrow = () => matchMedia('(max-width: 900px)').matches;
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (isNarrow()) { openDlSheet(); return; }
+    const was = item.classList.contains('open');
+    closeDrops();
+    if (!was) item.classList.add('open');
+    syncMask();
+  });
+  item.addEventListener('pointerenter', () => {
+    if (isNarrow() || !matchMedia('(hover:hover)').matches) return;
+    closeDrops(); item.classList.add('open'); syncMask();
+  });
+  item.addEventListener('pointerleave', () => {
+    if (isNarrow() || !matchMedia('(hover:hover)').matches) return;
+    item.classList.remove('open'); syncMask();
+  });
+}
+// 窄屏下载抽屉
+const dlSheetEl = $('#dlSheet');
+function openDlSheet() {
+  $('#dsBody').innerHTML = `
+    <p class="dl-group">OFFLINE · 离线版</p>${dlRows(DL1100)}
+    <p class="dl-group">ONLINE · 联网版</p>${dlRows(DL1100ON)}`;
+  dlSheetEl.classList.add('open');
+  dlSheetEl.setAttribute('aria-hidden', 'false');
+}
+function closeDlSheet() { dlSheetEl.classList.remove('open'); dlSheetEl.setAttribute('aria-hidden', 'true'); }
+$('#dsClose').addEventListener('click', closeDlSheet);
+document.addEventListener('click', (e) => {
+  if (dlSheetEl.classList.contains('open') && !dlSheetEl.contains(e.target)) closeDlSheet();
+});
+
+// ============ 移动端整屏菜单 ============
+{
+  const menu = $('#mMenu');
+  const openMenu = () => { menu.classList.add('open'); menu.setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden'; };
+  const closeMenu = () => { menu.classList.remove('open'); menu.setAttribute('aria-hidden', 'true'); document.body.style.overflow = ''; };
+  window.__openMenu = openMenu;
+  window.__closeMenu = closeMenu;
+  $('#hamburger').addEventListener('click', openMenu);
+  $('#mmClose').addEventListener('click', closeMenu);
+  // 有子项的项：点击展开/收起（手风琴）
+  $$('#mMenu [data-mdrop]').forEach((b) => b.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const item = b.closest('.mm-item');
+    const was = item.classList.contains('open');
+    $$('#mMenu .mm-item.open').forEach((x) => x.classList.remove('open'));
+    if (!was) item.classList.add('open');
+  }));
+}
+
+// ============ 窄屏目录：浮球 + 底部抽屉 ============
+{
+  const fab = $('#tocFab');
+  const sheet = $('#tocSheet');
+  const body = $('#tsBody');
+  const openSheet = () => { sheet.classList.add('open'); };
+  const closeSheet = () => { sheet.classList.remove('open'); };
+  fab.addEventListener('click', () => {
+    if (sheet.classList.contains('open')) { closeSheet(); return; }
+    // 打开前按“当前路由”重新同步目录内容，避免视图切换时序造成的目录错位
+    try {
+      const r = currentRoute();
+      const v = document.getElementById(VIEWS[r]);
+      if (window.__syncTocSheet) window.__syncTocSheet(r === '#/design' ? null : v);
+    } catch { /* ignore */ }
+    openSheet();
+  });
+  $('#tsClose').addEventListener('click', closeSheet);
+  // 从当前视图的 wave-toc 同步目录内容（克隆），点击条目跳转并关闭
+  window.__syncTocSheet = (viewEl) => {
+    const src = viewEl ? $('.wave-toc ul', viewEl) : null;
+    if (!src) { fab.style.display = 'none'; closeSheet(); return; }
+    // 去掉克隆出来的 id，避免文档内出现重复 id（曾造成 #toc140 匹配到两份）
+    body.innerHTML = src.outerHTML.replace(/\sid="[^"]*"/, '');
+    fab.style.display = '';
+    $$('#tsBody .wave-item').forEach((b) => b.addEventListener('click', () => {
+      document.getElementById(b.dataset.sec)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      closeSheet();
+    }));
+  };
+  // 抽屉内点目录外部区域关闭
+  document.addEventListener('click', (e) => {
+    if (sheet.classList.contains('open') && !sheet.contains(e.target) && e.target !== fab && !fab.contains(e.target)) closeSheet();
+  });
+}
+
+// 导航跳转（产品下载下拉：跳到介绍页对应下载区）
+function handleGo(el) {
+  const target = el.dataset.go;
+  const dl = el.dataset.dl;
+  closeDrops();
+  if (window.__closeMenu) window.__closeMenu();
+  navTo(target, () => {
+    if (dl === '140') document.getElementById('dl-140')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (dl === '1100') document.getElementById('dl-1100')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+}
+$$('[data-go]').forEach((el) => el.addEventListener('click', (e) => { e.stopPropagation(); handleGo(el); }));
+
+// 主题开关（跟随系统初始化，手动切换记忆）
+const saved = localStorage.getItem('site-theme');
+if (saved) htmlTheme(saved); else htmlTheme(matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+function htmlTheme(t) { document.documentElement.dataset.theme = t; }
+$('#themeBtn').addEventListener('click', () => {
+  const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  htmlTheme(t); try { localStorage.setItem('site-theme', t); } catch {}
+  // 同步设计方案 iframe 的主题
+  try {
+    const f = $('#designFrame');
+    if (f && f.contentDocument) f.contentDocument.documentElement.dataset.siteTheme = t;
+  } catch {}
+});
+
+// 首页透镜跟随鼠标
+$('.hero').addEventListener('pointermove', (e) => {
+  const r = e.currentTarget.getBoundingClientRect();
+  e.currentTarget.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100) + '%');
+  e.currentTarget.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100) + '%');
+});
+
+// 手册：目录树（h2 章节 + h3 子节，可展开收起）+ 搜索控件（N/M、上下跳转、荧光/橙标）
+{
+  const content = $('#manual-content');
+  const heads = $$('h2[id], h3[id]', content);
+  // 构树：h2 开组，h3 挂入当前组
+  let html = '', cur = null, groups = [];
+  for (const h of heads) {
+    if (h.tagName === 'H2') {
+      cur = { id: h.id, title: h.textContent, subs: [] };
+      groups.push(cur);
+    } else if (cur) cur.subs.push({ id: h.id, title: h.textContent });
+  }
+  for (const g of groups) {
+    const arrow = g.subs.length ? '<span class="toc-arrow"></span>' : '';
+    html += `<li class="toc-h2s"><button class="wave-item" data-sec="${g.id}"><span class="eq"><i></i><i></i><i></i><i></i><i></i></span>${g.title}${arrow}</button>`;
+    if (g.subs.length) {
+      html += `<ul class="toc-h3s">${g.subs.map((s) =>
+        `<li><button class="wave-item sub" data-sec="${s.id}">${s.title}</button></li>`).join('')}</ul>`;
+    }
+    html += '</li>';
+  }
+  $('#tocManual').innerHTML = html;
+  // 点击：h2 行 = 跳转该章节；箭头 = 展开/收起（阻止跳转）
+  $$('#tocManual .toc-h2s').forEach((li) => {
+    const btn = $('.wave-item', li);
+    const arrow = $('.toc-arrow', li);
+    if (arrow) arrow.addEventListener('click', (e) => { e.stopPropagation(); li.classList.toggle('open'); });
+    btn.addEventListener('click', () => {
+      document.getElementById(btn.dataset.sec)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    $$('.wave-item.sub', li).forEach((sb) => sb.addEventListener('click', () => {
+      document.getElementById(sb.dataset.sec)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }));
+  });
+
+  // 搜索：全文荧光黄高亮，控件条 N/M 计数 + 上下跳转，当前处橙色
+  const search = $('#manualSearch');
+  const mcCount = $('#mcCount');
+  const mcPrev = $('#mcPrev');
+  const mcNext = $('#mcNext');
+  let curIdx = -1;
+  const marks = () => $$('mark.mh', content);
+  function clearMarks() {
+    $$('mark.mh', content).forEach((m) => { const p = m.parentNode; p.replaceChild(document.createTextNode(m.textContent), m); p.normalize(); });
+    curIdx = -1;
+  }
+  function updateCtrl() {
+    const n = marks().length;
+    mcCount.textContent = n ? `${curIdx + 1} / ${n}` : '0 / 0';
+    mcPrev.disabled = mcNext.disabled = n === 0;
+  }
+  function gotoMark(i) {
+    const ms = marks();
+    if (!ms.length) return;
+    ms.forEach((m) => m.classList.remove('cur'));
+    curIdx = ((i % ms.length) + ms.length) % ms.length;
+    const m = ms[curIdx];
+    m.classList.add('cur');
+    m.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    updateCtrl();
+  }
+  function doSearch() {
+    clearMarks();
+    const kw = search.value.trim();
+    if (!kw) { updateCtrl(); return; }
+    const lower = kw.toLowerCase();
+    const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT);
+    const targets = [];
+    while (walker.nextNode()) {
+      const n = walker.currentNode;
+      if (n.nodeValue && n.nodeValue.toLowerCase().includes(lower) && n.parentNode.nodeName !== 'MARK') targets.push(n);
+    }
+    for (const node of targets) {
+      const text = node.nodeValue; const frag = document.createDocumentFragment();
+      let i = 0, at = text.toLowerCase().indexOf(lower);
+      while (at >= 0) {
+        if (at > i) frag.appendChild(document.createTextNode(text.slice(i, at)));
+        const mk = document.createElement('mark'); mk.className = 'mh'; mk.textContent = text.slice(at, at + kw.length);
+        frag.appendChild(mk); i = at + kw.length; at = text.toLowerCase().indexOf(lower, i);
+      }
+      if (i < text.length) frag.appendChild(document.createTextNode(text.slice(i)));
+      node.parentNode.replaceChild(frag, node);
+    }
+    if (marks().length) gotoMark(0); else updateCtrl(); // 回车/输入即跳第一处
+  }
+  search.addEventListener('input', doSearch);
+  search.addEventListener('keydown', (e) => { if (e.key === 'Enter') doSearch(); });
+  mcPrev.addEventListener('click', () => gotoMark(curIdx - 1));
+  mcNext.addEventListener('click', () => gotoMark(curIdx + 1));
+  updateCtrl();
+}
+
+// 目录联动（统一实现）：基于滚动位置的确定性计算——高亮 + 父组自动展开 + 目录整体跟随
+// 高亮按 data-sec 全文档同步：窄屏浮球抽屉里的克隆副本同样生效；
+// scrollIntoView(nearest) 对隐藏容器无副作用，对可见容器（侧栏 ul / 抽屉 body）即整体跟随滚动
+function spyOnScroll(secSel) {
+  const secs = $$(secSel);
+  if (!secs.length) return;
+  const ids = secs.map((s) => s.id);
+  let lastIdx = -1;
+  let ticking = false;
+  function update() {
+    const y = window.scrollY + 140; // 顶栏下方的判定线
+    let idx = 0;
+    secs.forEach((s, i) => {
+      if (s.getBoundingClientRect().top + window.scrollY <= y) idx = i;
+    });
+    if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 30) idx = secs.length - 1;
+    if (idx === lastIdx) return;
+    lastIdx = idx;
+    ids.forEach((id, i) => {
+      const sel = `.wave-item[data-sec="${CSS.escape(id)}"]`;
+      $$(sel).forEach((el) => {
+        const on = i === idx;
+        el.classList.toggle('on', on);
+        if (!on) return;
+        if (el.classList.contains('sub')) {
+          const grp = el.closest('.toc-h2s');
+          if (grp) grp.classList.add('open');
+        }
+        // 目录整体跟随：抽屉内的副本显式滚其滚动容器；侧栏则由 scrollIntoView 处理
+        const sheet = el.closest('#tsBody');
+        if (sheet) {
+          const target = el.offsetTop - sheet.clientHeight / 2 + el.offsetHeight / 2;
+          sheet.scrollTop = Math.max(0, target);
+        } else {
+          el.scrollIntoView({ block: 'nearest' });
+        }
+      });
+    });
+  }
+  const onScroll = () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => { ticking = false; update(); });
+  };
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', onScroll);
+  update();
+  // 兜底：常驻低频轮询（仅当该视图可见时工作）。滚动事件、smooth 滚动、容器滚动
+  // 任何时序问题都不会让目录失去联动。
+  setInterval(() => {
+    const first = secs[0];
+    if (!first || !first.isConnected) return;
+    const view = first.closest('.view');
+    if (view && !view.classList.contains('on')) return;
+    update();
+  }, 400);
+}
+spyOnScroll('#view-intro-140 .d-sec');
+spyOnScroll('#view-intro-1100 .d-sec');
+spyOnScroll('#manual-content h2[id], #manual-content h3[id]');
+
+// 滚动入场动效（design.html 的 reveal 语义；设计方案视图沿用其 is-visible 类）
+{
+  const rio = new IntersectionObserver((es) => {
+    es.forEach((en) => {
+      if (!en.isIntersecting) return;
+      en.target.classList.add('in', 'is-visible');
+      rio.unobserve(en.target);
+    });
+  }, { threshold: 0.1 });
+  $$('.d-sec.reveal, #view-design .reveal').forEach((el) => rio.observe(el));
+}
+
+// 设计方案视图：iframe 原样嵌入 + 竖线目录
+// 关键：iframe 每次导航后 contentWindow 是新对象、且 load 可能早于本脚本绑定——
+// 因此改为「父页面主导的常驻轮询（读位置）+ 事件委托（点击时动态取最新 window/doc）」，
+// 不依赖任何跨文档事件绑定，彻底避免"绑定到旧/空 window"导致的失效。
+{
+  const frame = $('#designFrame');
+  const secIds = ['position', 'features', 'challenges', 'highlights', 'system', 'closing'];
+  const names = ['定位', '功能', '挑战与方案', '亮点', '系统实现', '结语'];
+  $('#tocDesign').innerHTML = secIds.map((id, i) =>
+    `<div class="dot-item" data-sec="${id}"><span class="dot-label">${names[i]}</span><span class="dot"></span></div>`).join('');
+  const items = $$('#tocDesign .dot-item');
+  let lastIdx = -1;
+  function pollOnce() {
+    try {
+      const view = document.getElementById('view-design');
+      if (!view || !view.classList.contains('on')) return true; // 非当前页不做无用功
+      const win = frame.contentWindow, doc = frame.contentDocument;
+      if (!doc || !doc.getElementById('position')) return false;
+      doc.documentElement.dataset.siteTheme = document.documentElement.dataset.theme;
+      let idx = 0;
+      const atBottom = win.scrollY + win.innerHeight >= doc.documentElement.scrollHeight - 40;
+      if (atBottom) idx = secIds.length - 1;
+      else {
+        const y = win.scrollY + win.innerHeight * 0.35;
+        secIds.forEach((id, i) => {
+          const el = doc.getElementById(id);
+          if (el && el.offsetTop <= y) idx = i;
+        });
+      }
+      if (idx !== lastIdx) {
+        lastIdx = idx;
+        items.forEach((it, i) => it.classList.toggle('on', i === idx));
+      }
+      return true;
+    } catch { return false; }
+  }
+  setInterval(pollOnce, 350); // 常驻轻量轮询（仅 design 视图可见时工作）
+  pollOnce();
+  // 点击：委托在父页面元素上（永不失效），每次动态取最新 contentWindow/doc
+  $('#tocDesign').addEventListener('click', (e) => {
+    const it = e.target.closest('.dot-item');
+    if (!it) return;
+    try {
+      const win = frame.contentWindow, doc = frame.contentDocument;
+      const el = doc.getElementById(it.dataset.sec);
+      if (el) win.scrollTo({ top: Math.max(el.offsetTop - 20, 0), behavior: 'smooth' });
+    } catch { /* ignore */ }
+  });
+}
+// 版本日志目录联动
+spyOnScroll('#logList .log-card');
+
+applyRoute();
+</script>
 </body>
 </html>

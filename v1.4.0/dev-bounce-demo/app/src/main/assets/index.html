@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>回弹 Demo 2</title>
+<!--
+  回弹 A/B 对照 Demo（一个包测两种方案）：
+  A 原生配方：内层容器 overscroll-behavior-y: contain（系统 GPU 实现）
+  B JS 橡皮筋：滚到边缘后继续拖动 → 内容层按阻尼位移（WAAPI 回弹），
+    同时容器 overscroll-behavior-y: none 压掉原生，避免两套叠加
+-->
+<style>
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+    font-family: system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #fafafa;
+    color: #1a1e22;
+  }
+
+  #app {
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    flex: none;
+    padding: calc(0.6rem + env(safe-area-inset-top, 0px)) 1rem 0.6rem;
+    background: #ffffff;
+    border-bottom: 1px solid #e7e2d6;
+  }
+  header h1 { margin: 0 0 0.45rem; font-size: 1.05rem; }
+
+  /* 方案切换（两枚大按钮，便于真机点按） */
+  .tabs { display: flex; gap: 0.5rem; }
+  .tab {
+    flex: 1;
+    min-height: 44px;
+    border: 1px solid #d8d2c4;
+    border-radius: 12px;
+    background: #f1efe9;
+    color: #5f5c54;
+    font-size: 0.92rem;
+    font-weight: 700;
+  }
+  .tab.active {
+    background: #b33a2f;
+    border-color: #b33a2f;
+    color: #fff;
+  }
+
+  .scroll-container {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  /* A：原生配方 —— contain 保留本层回弹 */
+  .scroll-container.native { overscroll-behavior-y: contain; }
+  /* B：JS 毛皮筋 —— 压掉原生，避免叠加；渐变底让毛玻璃行的 blur 可见 */
+  .scroll-container.jsband {
+    overscroll-behavior-y: none;
+    background: linear-gradient(160deg, #f7e8c8, #cfe0f4 40%, #efd5d0);
+  }
+
+  .content {
+    min-height: calc(100% + 1px);
+    padding: 0.75rem 1rem calc(1.25rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.75rem 0.85rem;
+    margin-bottom: 0.55rem;
+    background: #ffffff;
+    border: 1px solid #e7e2d6;
+    border-radius: 12px;
+  }
+  .row .no {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    display: grid; place-items: center;
+    background: #f3e8e6; color: #b33a2f;
+    font-weight: 700; font-size: 0.8rem;
+    flex: none;
+  }
+  .row .txt { min-width: 0; }
+  .row .txt b { display: block; font-size: 0.92rem; }
+  .row .txt span { font-size: 0.75rem; color: #8a877e; }
+
+  .hint {
+    margin-top: 1rem;
+    padding: 0.7rem 0.85rem;
+    border-radius: 12px;
+    background: #f1efe9;
+    font-size: 0.75rem;
+    line-height: 1.6;
+    color: #6f6c64;
+  }
+
+  /* 嫌疑实验：物品页独有元素复刻 */
+  .row .thumb-img {
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    object-fit: cover;
+    flex: none;
+    background: #f3e8e6;
+  }
+  .row.glass-row {
+    background: rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  .demo-fab {
+    position: fixed;
+    right: 16px;
+    bottom: calc(70px + env(safe-area-inset-bottom, 0px));
+    width: 54px; height: 54px;
+    border-radius: 999px;
+    border: none;
+    background: #b33a2f;
+    color: #fff;
+    font-size: 1.6rem;
+    line-height: 1;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28), 0 0 0 6px rgba(179, 58, 47, 0.18);
+    z-index: 50;
+  }
+  .opts { display: flex; gap: 0.9rem; margin-top: 0.5rem; flex-wrap: wrap; }
+  .opts label { font-size: 0.8rem; color: #5f5c54; display: flex; align-items: center; gap: 0.3rem; }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1>回弹 A/B 对照</h1>
+      <div class="tabs">
+        <button type="button" class="tab active" id="tab-native">A · 原生配方</button>
+        <button type="button" class="tab" id="tab-js">B · JS 橡皮筋</button>
+      </div>
+      <div class="opts">
+        <label><input type="checkbox" id="opt-img" /> 行内图片</label>
+        <label><input type="checkbox" id="opt-glass" /> 毛玻璃行</label>
+        <label><input type="checkbox" id="opt-fab" /> 悬浮按钮(FAB)</label>
+      </div>
+    </header>
+    <button type="button" class="demo-fab" id="demo-fab" style="display:none" aria-hidden="true">+</button>
+
+    <!-- A：原生配方 -->
+    <div class="scroll-container native" id="scroller-native">
+      <div class="content" id="list-native"></div>
+    </div>
+
+    <!-- B：JS 橡皮筋 -->
+    <div class="scroll-container jsband hidden" id="scroller-js">
+      <div class="content" id="list-js"></div>
+    </div>
+  </div>
+
+  <script>
+    /* ---------------- 列表内容 ---------------- */
+    /* 嫌疑实验：三个开关复刻物品页独有元素，澎湃 3 上触底逐个试 */
+    var optImg = document.getElementById('opt-img');
+    var optGlass = document.getElementById('opt-glass');
+    var optFab = document.getElementById('opt-fab');
+    var demoFab = document.getElementById('demo-fab');
+    var thumbDataUrl = (function () {
+      var c = document.createElement('canvas');
+      c.width = 64; c.height = 64;
+      var g = c.getContext('2d');
+      g.fillStyle = '#d8c9a3'; g.fillRect(0, 0, 64, 64);
+      g.fillStyle = '#8a6d3b'; g.beginPath(); g.arc(32, 26, 13, 0, 6.3); g.fill();
+      g.fillRect(10, 44, 44, 12);
+      return c.toDataURL('image/png');
+    })();
+
+    function buildList(el, label) {
+      var imgTag = optImg.checked
+        ? '<img class="thumb-img" src="' + thumbDataUrl + '" alt="" />'
+        : '';
+      var rowClass = optGlass.checked ? 'row glass-row' : 'row';
+      var html = '';
+      for (var i = 1; i <= 45; i++) {
+        html +=
+          '<div class="' + rowClass + '"><div class="no">' + i + '</div>' + imgTag +
+          '<div class="txt">' +
+          '<b>[' + label + '] 条目 ' + i + '</b>' +
+          '<span>滚动到顶/底后继续拖动，看回弹</span>' +
+          '</div></div>';
+      }
+      html +=
+        '<div class="hint">当前方案：' + label +
+        '。到顶继续下拉、到底继续上拉，对比回弹有无与手感。</div>';
+      el.innerHTML = html;
+    }
+    var listNative = document.getElementById('list-native');
+    var listJs = document.getElementById('list-js');
+    function rebuildLists() {
+      buildList(listNative, 'A 原生配方');
+      buildList(listJs, 'B JS 橡皮筋');
+      demoFab.style.display = optFab.checked ? 'block' : 'none';
+    }
+    optImg.addEventListener('change', rebuildLists);
+    optGlass.addEventListener('change', rebuildLists);
+    optFab.addEventListener('change', rebuildLists);
+    rebuildLists();
+
+    /* ---------------- 方案切换 ---------------- */
+    var scNative = document.getElementById('scroller-native');
+    var scJs = document.getElementById('scroller-js');
+    var tabNative = document.getElementById('tab-native');
+    var tabJs = document.getElementById('tab-js');
+
+    function show(which) {
+      scNative.classList.toggle('hidden', which !== 'native');
+      scJs.classList.toggle('hidden', which !== 'js');
+      tabNative.classList.toggle('active', which === 'native');
+      tabJs.classList.toggle('active', which === 'js');
+      if (which === 'js') attachRubberBand(scJs, listJs);
+      meterVisible = which === 'js';
+      meter.style.display = meterVisible ? 'block' : 'none';
+      meter2.style.display = meterVisible ? 'block' : 'none';
+    }
+    tabNative.addEventListener('click', function () { show('native'); });
+    tabJs.addEventListener('click', function () { show('js'); });
+
+    /* ---------------- 帧间隔监测器（B 模式） ---------------- */
+    var meter = document.createElement('div');
+    meter.style.cssText =
+      'position:fixed;left:8px;bottom:8px;z-index:99;background:rgba(0,0,0,.72);color:#7dff9b;' +
+      'font:600 11px/1.5 monospace;padding:4px 8px;border-radius:8px;pointer-events:none;display:none;';
+    document.body.appendChild(meter);
+    var meter2 = document.createElement('div');
+    meter2.style.cssText = meter.style.cssText + 'bottom:44px;';
+    document.body.appendChild(meter2);
+    var meterVisible = false;
+    var lastT = 0, worst = 0, frames = 0, accum = 0;
+    (function meterLoop(t) {
+      requestAnimationFrame(meterLoop);
+      if (!meterVisible) { lastT = 0; return; }
+      if (lastT) {
+        var d = t - lastT;
+        accum += d; frames++;
+        if (d > worst) worst = d;
+        if (frames >= 20) {
+          meter.textContent =
+            '帧间隔 均 ' + (accum / frames).toFixed(1) + 'ms · 最大 ' + worst.toFixed(1) + 'ms';
+          meter2.textContent =
+            'scrollTop ' + scJs.scrollTop.toFixed(2) +
+            ' · max=' + (scJs.scrollHeight - scJs.clientHeight).toFixed(2);
+          accum = 0; frames = 0; worst = 0;
+        }
+      }
+      lastT = t;
+    })(0);
+
+    /* ---------------- B：JS 橡皮筋（与码上记同款算法） ----------------
+     * 只在真正滚到顶/底后继续朝外拖动时生效；
+     * 位移走 rAF 合帧 + 内容层提升，松手用 WAAPI 在合成器上回弹。
+     */
+    var bandBound = false;
+    function attachRubberBand(scroller, content) {
+      if (bandBound) return;
+      bandBound = true;
+
+      var MAX_PULL = 96, DAMPING = 0.35, AXIS_LOCK = 8;
+      var active = false, axis = 'none', lifted = false;
+      var sx = 0, sy = 0, atTop = false, atBottom = false, pinTop = 0;
+      var offset = 0, rafId = 0, pending = 0, anim = null;
+
+      function lift() {
+        if (lifted) return;
+        lifted = true;
+        content.style.transition = 'none';
+        content.style.willChange = 'transform';
+      }
+      function drop() {
+        if (!lifted) return;
+        lifted = false;
+        content.style.transition = '';
+        content.style.willChange = '';
+        content.style.transform = '';
+      }
+      function flush() {
+        rafId = 0;
+        content.style.transform = pending ? 'translate3d(0,' + pending + 'px,0)' : '';
+      }
+      function schedule(v) {
+        pending = v;
+        if (!rafId) rafId = requestAnimationFrame(flush);
+      }
+
+      scroller.addEventListener('touchstart', function (e) {
+        if (e.touches.length !== 1) { active = false; return; }
+        if (anim) { anim.cancel(); anim = null; }
+        if (scroller.scrollHeight - scroller.clientHeight <= 2) { active = false; return; }
+        var t = e.touches[0];
+        sx = t.clientX; sy = t.clientY;
+        axis = 'none'; offset = 0;
+        atTop = scroller.scrollTop <= 0;
+        atBottom = scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 1;
+        /* 触底整备（与码上记同款）：1) 零余量——内容层 padding-bottom 把
+           max 的分数部分吸收成整数；2) scrollTop 贴齐；3) 记录冻结值，
+           拉扯期间持续维持。底部与顶部从此滚动层面完全一致 */
+        if (atBottom) {
+          /* scrollHeight/clientHeight 是取整值测不到分数；scrollTop 精确 ——
+             先吸到真实最大值，再用 padding 把它修到整数 */
+          scroller.scrollTop = scroller.scrollHeight;
+          var sv = scroller.scrollTop;
+          var snapped = Math.round(sv);
+          var delta = snapped - sv;
+          if (Math.abs(delta) > 0.001) {
+            var pb = parseFloat(getComputedStyle(content).paddingBottom) || 0;
+            content.style.paddingBottom = (pb + delta) + 'px';
+            scroller.scrollTop = snapped;
+          }
+          atBottom = scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 1;
+          pinTop = scroller.scrollTop;
+        }
+        active = atTop || atBottom;
+      }, { passive: true });
+
+      scroller.addEventListener('touchmove', function (e) {
+        if (!active || e.touches.length !== 1) return;
+        var t = e.touches[0];
+        var dx = t.clientX - sx, dy = t.clientY - sy;
+        if (axis === 'none') {
+          if (Math.abs(dy) < AXIS_LOCK && Math.abs(dx) < AXIS_LOCK) return;
+          axis = Math.abs(dy) >= Math.abs(dx) ? 'v' : 'h';
+        }
+        if (axis !== 'v') return;
+        var pulling = (atTop && dy > 0) || (atBottom && dy < 0);
+        if (!pulling) {
+          if (offset !== 0) { offset = 0; schedule(0); }
+          drop();
+          return;
+        }
+        lift();
+        /* 拉扯期间冻结滚动：钉在触底整备值上，手势里滚动只归我们管 */
+        if (atBottom && scroller.scrollTop !== pinTop) scroller.scrollTop = pinTop;
+        /* 整数 CSS px：底部 scrollTop 为分数，整数位移保持亚像素相位恒定，
+           避免 Chrome 反复重栅格化（触底独有卡顿的来源） */
+        offset = Math.round(Math.max(-MAX_PULL, Math.min(MAX_PULL, dy * DAMPING)));
+        schedule(offset);
+      }, { passive: true });
+
+      function settle() {
+        if (!active) return;
+        active = false; axis = 'none';
+        if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
+        if (!offset || !lifted) { drop(); return; }
+        var from = offset;
+        offset = 0;
+        /* 先把 inline transform 预置为 0，动画中断也不会跳回拖动值 */
+        content.style.transform = 'translate3d(0,0,0)';
+        try {
+          anim = content.animate(
+            [
+              { transform: 'translate3d(0,' + from + 'px,0)' },
+              { transform: 'translate3d(0,0,0)' }
+            ],
+            { duration: 420, easing: 'cubic-bezier(0.22,0.61,0.36,1)' }
+          );
+          anim.onfinish = function () { drop(); anim = null; };
+          anim.oncancel = function () { anim = null; };
+        } catch (err) {
+          drop();
+        }
+      }
+      scroller.addEventListener('touchend', settle, { passive: true });
+      scroller.addEventListener('touchcancel', settle, { passive: true });
+    }
+  </script>
+</body>
+</html>

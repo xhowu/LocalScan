@@ -1,0 +1,21 @@
+// 极简回弹对照 Demo：纯 WebView + 原生 overscroll 配方，零第三方依赖
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.13.0'
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}

@@ -3,7 +3,24 @@ dist/
 .DS_Store
 *.log
 android-build/
-localscan/android/
-localscan/dist-android/
-localscan/node_modules/
 
+# 主线 App（app/）：原生工程与构建产物不入库
+app/android/
+app/dist/
+app/dist-online/
+app/node_modules/
+app/build-*.log
+
+# 生成物通用（Gradle / Android 构建输出）
+**/build/
+**/.gradle/
+
+# 本地工作目录（临时素材、脚本产物）
+previews/
+.local/
+
+# 安装包一律通过 GitHub Releases 分发，不进仓库
+releases/
+
+# 本地工作记忆
+.workbuddy/

@@ -1,0 +1,29 @@
+apply plugin: 'com.android.application'
+
+android {
+    namespace = "com.demo.bounce"
+    compileSdk = 36
+
+    defaultConfig {
+        applicationId "com.demo.bounce"
+        minSdkVersion 24
+        targetSdkVersion 36
+        versionCode 6
+        versionName "1.5"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    // 零依赖：不引 appcompat，用系统主题；WebView 是框架自带的
+}

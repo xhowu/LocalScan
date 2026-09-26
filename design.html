@@ -6,26 +6,22 @@
   <title>码上记 LocalScan · App 设计方案</title>
   <meta name="description" content="码上记 (LocalScan) — 注重隐私、无需联网、支持多设备点对点同步的本地物品/库存管理工具设计方案" />
   <link rel="stylesheet" href="styles.css" />
+  <style id="siteThemeOverride">
+    /* 官网浅色主题：整体反转设计稿的颜色变量（只变色，不改任何布局/位置） */
+    html[data-site-theme="light"] {
+      --ink: #f5f2ea; --ink-2: #ebe6da; --ink-3: #ded8c9;
+      --paper: #ffffff; --paper-2: #f3f0e8; --rule: #d8d2c2;
+      --text: #1a1e22; --text-on-dark: #1a1e22;
+      --muted: #6d736f; --muted-dark: #6d736f;
+      --line-dark: rgba(20, 24, 28, 0.12);
+      --seal-soft: rgba(179, 58, 47, 0.12);
+    }
+  </style>
 </head>
 <body>
   <div class="grain" aria-hidden="true"></div>
 
   <!-- Top instrument strip -->
-  <header class="strip">
-    <div class="strip-inner">
-      <span class="strip-mark">LOCALSCAN</span>
-      <span class="strip-sep" aria-hidden="true"></span>
-      <span class="strip-title">码上记 · App 设计方案</span>
-      <nav class="strip-nav" aria-label="站点导航">
-        <a href="./index.html">产品</a>
-        <a href="#position">定位</a>
-        <a href="#features">功能</a>
-        <a href="#challenges">挑战</a>
-        <a href="#highlights">亮点</a>
-        <a href="#system">系统</a>
-      </nav>
-    </div>
-  </header>
 
   <main>
     <!-- Hero -->
