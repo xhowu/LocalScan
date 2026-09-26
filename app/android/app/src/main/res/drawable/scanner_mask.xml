@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 取景卡圆角遮罩：浮层背景 + outline 裁剪（相机/角标/扫描线都按圆角裁掉） -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#0B0E11" />
+    <corners android:radius="22dp" />
+</shape>

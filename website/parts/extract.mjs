@@ -1,13 +1,15 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const ROOT = 'C:/Users/Admin/WorkBuddy/LocalScan';
+// 位置无关：parts/ → website/ → 仓库根（仓库克隆到任何路径都能跑）
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const OUT = path.join(ROOT, 'website/parts');
 fs.mkdirSync(OUT, { recursive: true });
 
 // 1) MANUAL_HTML：把 TS 行原样写进 .mjs（转义语义相同），import 求值后存文件
 {
-  const ts = fs.readFileSync(path.join(ROOT, 'localscan/src/lib/manual-html.ts'), 'utf8');
+  const ts = fs.readFileSync(path.join(ROOT, 'app/src/lib/manual-html.ts'), 'utf8');
   const m = ts.match(/export const MANUAL_HTML = ("(?:[^"\\]|\\.)*");/s);
   if (!m) throw new Error('MANUAL_HTML literal not found');
   fs.writeFileSync(path.join(OUT, '_manual_tmp.mjs'), 'export default ' + m[1]);
@@ -19,7 +21,7 @@ fs.mkdirSync(OUT, { recursive: true });
 
 // 2) LOG：ChangelogPage 的数组字面量是合法 JS，剥掉 TS 类型标注后求值
 {
-  const ts = fs.readFileSync(path.join(ROOT, 'localscan/src/pages/ChangelogPage.tsx'), 'utf8');
+  const ts = fs.readFileSync(path.join(ROOT, 'app/src/pages/ChangelogPage.tsx'), 'utf8');
   const start = ts.indexOf('= [', ts.indexOf('const LOG'));
   const end = ts.indexOf('\n]', start);
   const lit = ts.slice(start + 2, end + 2);
@@ -30,12 +32,14 @@ fs.mkdirSync(OUT, { recursive: true });
 
 // 3) 图标 base64（xhdpi 96px）
 {
-  const png = fs.readFileSync(path.join(ROOT, 'localscan/android/app/src/main/res/mipmap-xhdpi/ic_launcher.png'));
+  const png = fs.readFileSync(path.join(ROOT, 'app/android/app/src/main/res/mipmap-xhdpi/ic_launcher.png'));
   fs.writeFileSync(path.join(OUT, 'logo.b64'), 'data:image/png;base64,' + png.toString('base64'));
   console.log('logo b64 bytes:', png.length);
 }
 
-// 4) design.html 的 <main> 内容（原顶栏由官网顶栏替代）
+// 4) design.html 的 <main> 内容【历史方案：注入式】
+//    当前官网改用 iframe 直接嵌入 website/design.html（100% 保真、天然样式隔离），
+//    本产物与下一节的 design.css 已不被 build.mjs 使用，保留仅作回退参考。
 {
   const src = fs.readFileSync(path.join(ROOT, 'website/design.html'), 'utf8');
   const a = src.indexOf('<main>');

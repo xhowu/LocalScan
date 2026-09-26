@@ -45,18 +45,55 @@ docs/                                   使用手册、版本-资产对照表
 - **`app/` 是活代码**：日常开发与构建都在这（原生工程 `app/android/`、`node_modules`、`dist*` 均被忽略）。
 - **版本归档**：`vX.Y.Z/` 是该版本冻结的源码快照，只增不改；安装包不在仓库内，挂 Releases。
 
-## 开发（app/）
+## 开发
+
+### App（app/）
 
 ```bash
 cd app
 npm install
-npm run build           # 离线版 → dist
-npm run build:online    # 联网版 → dist-online
-npm run android:apk     # 构建离线版 APK
-npm run android:apk:online
+npm run dev                  # Web 开发服务器
+npm run build                # 离线版 → dist
+npm run build:online         # 联网版 → dist-online
+npm run android:apk          # 一键：build + cap-sync + assembleOfflineDebug
+npm run android:apk:online   # 一键：联网版
 ```
 
-Android 构建参数（版本号、flavor、ABI 拆分）在 `app/android/app/build.gradle`；App 版本号同步于 `app/src/lib/app-const.ts`。
+**Android 原生工程已随源码入库**（`app/android/`，含手写 Java 插件、两个 flavor 的专属资源、
+flavor/ABI 拆分与版本号配置、图标与启动图）。克隆后**不需要也不要**重新执行 `cap add android`
+——那会覆盖这些手改内容。
+
+构建前置：**JDK 21** + **Android SDK**（build-tools 34+，platform 34 或 36）。
+`ANDROID_HOME` 未设置时在 `app/android/local.properties` 里指定 `sdk.dir`（该文件不入库）。
+
+不入库、由命令重建的生成物：`app/android/app/build/`、`.gradle/`、`local.properties`、
+`app/src/main/assets/public/`、`capacitor-cordova-android-plugins/`。
+
+若某环境下 `gradlew` 不可用，可直接用系统 Gradle：
+`gradle -p android assembleOfflineDebug --max-workers=1`（低配机器再加 `-Dorg.gradle.parallel=false`）。
+
+版本号需**三处同步**：`app/src/lib/app-const.ts` 的 `APP_VERSION`、
+`app/android/app/build.gradle` 的 `versionCode` / `versionName`、`app/src/pages/ChangelogPage.tsx`。
+
+### 官网（website/ → 仓库根）
+
+```bash
+node website/parts/extract.mjs        # 从 App 源码提取手册 / 版本日志 / 图标 → parts/
+node website/build.mjs                # 模板 + 素材 → website/index.html
+cp website/index.html index.html      # 根目录才是 Pages 服务的位置
+cp website/design.html website/styles.css .   # 设计方案页由 iframe 直接嵌入，需同步到根
+```
+
+两个脚本都基于自身位置定位，**克隆到任何路径都能跑**（无需改路径）。
+`parts/` 里的素材已入库，只有改了 App 的手册 / 版本日志 / 图标才需要重跑 `extract.mjs`。
+
+### 发布新版本
+
+1. 改版本号（三处，见上）→ `npm run android:apk` 与 `npm run android:apk:online`
+2. 按 ABI 得到 8 个包，重命名为 `LocalScan-v<版本>[-online][-<架构>].apk`
+3. 建 Release 并上传（`gh release create v<版本> …`）——资产名必须与官网直链完全一致
+4. 同步 `website/index.template.html` 里的直链与包体大小 → 重建官网 → 复制到根
+5. 更新 `docs/RELEASES.md`；把当版源码复制成 `v<版本>/` 快照
 
 ## 关于
 

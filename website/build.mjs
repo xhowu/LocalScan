@@ -1,7 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const DIR = 'C:/Users/Admin/WorkBuddy/LocalScan/website';
+// 位置无关：脚本自身所在目录即构建工作目录（仓库克隆到任何路径都能跑）
+const DIR = path.dirname(fileURLToPath(import.meta.url));
 const tpl = fs.readFileSync(path.join(DIR, 'index.template.html'), 'utf8');
 const logo = fs.readFileSync(path.join(DIR, 'parts/logo.b64'), 'utf8').trim();
 const manual = fs.readFileSync(path.join(DIR, 'parts/manual.html'), 'utf8');

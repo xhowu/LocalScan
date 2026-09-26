@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 红色扫描线（两端渐隐） -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <gradient
+        android:angle="0"
+        android:startColor="#00E07064"
+        android:centerColor="#E07064"
+        android:endColor="#00E07064" />
+    <corners android:radius="1dp" />
+    <size android:height="2dp" />
+</shape>

@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  原生全屏扫码页。结构：
+    预览铺满 → 上/下/左/右四块深色遮罩夹出中间取景区（只露出取景框）
+    → 四角红框 + 红扫描线 → 右上角红色关闭钮、框下闪光灯、底部「扫码」
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/scanner_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000">
+
+    <androidx.camera.view.PreviewView
+        android:id="@+id/scanner_preview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- 四块遮罩夹出取景区（高度在 Activity 里按屏幕实高计算）；70% 黑，取景框外基本不透 -->
+    <View
+        android:id="@+id/dim_top"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_gravity="top"
+        android:background="#B3000000" />
+
+    <View
+        android:id="@+id/dim_bottom"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_gravity="bottom"
+        android:background="#B3000000" />
+
+    <LinearLayout
+        android:id="@+id/dim_middle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <View
+            android:id="@+id/dim_left"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="#B3000000" />
+
+        <!-- 取景框：尺寸在 Activity 里设定；四角红角标（不闭合） -->
+        <FrameLayout
+            android:id="@+id/scanner_frame"
+            android:layout_width="258dp"
+            android:layout_height="258dp">
+
+            <View
+                android:layout_width="26dp"
+                android:layout_height="26dp"
+                android:layout_gravity="top|start"
+                android:background="@drawable/scanner_corner_tl" />
+
+            <View
+                android:layout_width="26dp"
+                android:layout_height="26dp"
+                android:layout_gravity="top|end"
+                android:background="@drawable/scanner_corner_tr" />
+
+            <View
+                android:layout_width="26dp"
+                android:layout_height="26dp"
+                android:layout_gravity="bottom|start"
+                android:background="@drawable/scanner_corner_bl" />
+
+            <View
+                android:layout_width="26dp"
+                android:layout_height="26dp"
+                android:layout_gravity="bottom|end"
+                android:background="@drawable/scanner_corner_br" />
+
+            <View
+                android:id="@+id/scanner_line"
+                android:layout_width="match_parent"
+                android:layout_height="2dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/scanner_line" />
+        </FrameLayout>
+
+        <View
+            android:id="@+id/dim_right"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="#B3000000" />
+    </LinearLayout>
+
+    <!-- 右上角红色关闭钮：top 44dp，避开状态栏区域 -->
+    <TextView
+        android:id="@+id/scanner_close"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="44dp"
+        android:layout_marginEnd="18dp"
+        android:background="@drawable/scanner_close_bg"
+        android:gravity="center"
+        android:text="✕"
+        android:textColor="#FFFFFF"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+    <!-- 闪光灯（框下方，位移在 Activity 里按框位置计算） -->
+    <LinearLayout
+        android:id="@+id/scanner_torch"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal|center_vertical"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:alpha="0.62">
+
+        <ImageView
+            android:id="@+id/torch_icon"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:contentDescription="@string/scanner_torch"
+            android:src="@drawable/ic_scanner_torch" />
+
+        <TextView
+            android:id="@+id/torch_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="@string/scanner_torch"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <!-- 底部文案 -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="34dp"
+        android:text="@string/scanner_title"
+        android:textColor="#FFFFFF"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+</FrameLayout>

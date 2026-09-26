@@ -4,8 +4,8 @@ dist/
 *.log
 android-build/
 
-# 主线 App（app/）：原生工程与构建产物不入库
-app/android/
+# 主线 App（app/）：原生工程随源码入库（其中手写的 Java 插件、build.gradle 的
+# flavor/ABI 配置、图标与启动图资源都是必需资产）；其生成物由 app/android/.gitignore 负责
 app/dist/
 app/dist-online/
 app/node_modules/

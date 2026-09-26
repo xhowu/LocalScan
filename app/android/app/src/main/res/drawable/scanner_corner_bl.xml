@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 四角取景框的一角：横条 + 竖条 -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:gravity="bottom">
+        <shape android:shape="rectangle">
+            <size android:height="3dp" android:width="26dp" />
+            <solid android:color="#E07064" />
+        </shape>
+    </item>
+    <item android:gravity="left">
+        <shape android:shape="rectangle">
+            <size android:height="26dp" android:width="3dp" />
+            <solid android:color="#E07064" />
+        </shape>
+    </item>
+</layer-list>
