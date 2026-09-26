@@ -1,0 +1,19 @@
+# 统一行尾为 LF（含检出）。
+# 否则 Windows（core.autocrlf=true）检出为 CRLF，而构建脚本写出 LF，
+# 会让 website/parts/* 等生成物被 git 误判为「已修改」（内容其实完全相同）。
+* text=auto eol=lf
+
+# 二进制文件：禁止任何行尾 / 编码转换
+*.jar      binary
+*.png      binary
+*.jpg      binary
+*.jpeg     binary
+*.webp     binary
+*.ico      binary
+*.apk      binary
+*.aab      binary
+*.keystore binary
+*.jks      binary
+
+# Windows 批处理脚本需要 CRLF
+*.bat      text eol=crlf
