@@ -15,10 +15,10 @@
 
 | 资产名 | 架构 | 字节数 | 大小 | 直链 |
 |--------|------|--------|------|------|
-| `LocalScan-v1.10.0.apk` | universal | 75,010,873 | 75.0 MB | `…/download/v1.10.0/LocalScan-v1.10.0.apk` |
-| `LocalScan-v1.10.0-arm64.apk` | arm64-v8a | 29,527,875 | 29.5 MB | `…/download/v1.10.0/LocalScan-v1.10.0-arm64.apk` |
-| `LocalScan-v1.10.0-armv7.apk` | armeabi-v7a | 23,546,287 | 23.5 MB | `…/download/v1.10.0/LocalScan-v1.10.0-armv7.apk` |
-| `LocalScan-v1.10.0-x86_64.apk` | x86_64 | 31,084,359 | 31.1 MB | `…/download/v1.10.0/LocalScan-v1.10.0-x86_64.apk` |
+| `LocalScan-v1.10.0.apk` | universal | 75,007,320 | 75.0 MB | `…/download/v1.10.0/LocalScan-v1.10.0.apk` |
+| `LocalScan-v1.10.0-arm64.apk` | arm64-v8a | 29,524,322 | 29.5 MB | `…/download/v1.10.0/LocalScan-v1.10.0-arm64.apk` |
+| `LocalScan-v1.10.0-armv7.apk` | armeabi-v7a | 23,542,734 | 23.5 MB | `…/download/v1.10.0/LocalScan-v1.10.0-armv7.apk` |
+| `LocalScan-v1.10.0-x86_64.apk` | x86_64 | 31,080,806 | 31.1 MB | `…/download/v1.10.0/LocalScan-v1.10.0-x86_64.apk` |
 
 ### 联网版（`com.localscan.app.online`，含条码商品查询，默认关闭）
 
@@ -30,6 +30,8 @@
 | `LocalScan-v1.10.0-online-x86_64.apk` | x86_64 | 31,084,371 | 31.1 MB | `…/download/v1.10.0/LocalScan-v1.10.0-online-x86_64.apk` |
 
 源码快照：[`v1.10.0/`](../v1.10.0)
+
+> **构建修正（2026-09-27）**：首版离线包因 `cap-sync` 把两个 flavor 的 web 产物写入同一目录而**误含联网版代码**（内含 `barcode-lookup` chunk）。已改为按 flavor 隔离产物并重新构建，离线 4 个资产各减小 3,553 字节（即该 chunk），联网包内容未变。
 
 ---
 

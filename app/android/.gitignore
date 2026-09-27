@@ -92,8 +92,10 @@ lint/tmp/
 # Cordova plugins for Capacitor
 capacitor-cordova-android-plugins
 
-# Copied web assets
+# Copied web assets（cap-sync.mjs 会把它们隔离到 flavor 专属目录）
 app/src/main/assets/public
+app/src/offline/assets/public
+app/src/online/assets/public
 
 # Generated Config files
 app/src/main/assets/capacitor.config.json
