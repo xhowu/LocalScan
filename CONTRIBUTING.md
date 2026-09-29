@@ -92,3 +92,18 @@ chore(repo): 补 MPL-2.0 许可证与工程配置
 
 本项目采用 **MPL-2.0**。提交贡献即表示你同意你的贡献以同一许可证发布。
 按 MPL-2.0 的规则，**被修改过的源文件必须继续保持 MPL 开源**，未改动的文件与新增文件可另行选择许可证。
+
+**新增源码文件请带上这段声明头**（`app/src`、`app/scripts`、`scripts/`、`website/` 下已有的文件都已添加）：
+
+```ts
+/**
+ * 码上记（LocalScan）—— 隐私优先的本地物品 / 库存管理
+ * Copyright (c) 2026 xhowu
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+```
+
+（`.css` / `.html` / `.md` 等非代码文件不需要单独加，仓库根的 `LICENSE` 已覆盖整个项目。）
