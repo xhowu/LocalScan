@@ -1,7 +1,27 @@
 # 依赖更新机器人配置
 #
-# 作用：定期检查项目引用的第三方库有没有新版本、有没有已知安全漏洞，
-# 有的话自动开一个 PR，你审核后合并即可。它跑在 GitHub 服务器上，不需要本地环境。
+# Dependabot 是 GitHub 自带的机器人，跑在 GitHub 服务器上，不需要本地环境，
+# 会产生两类 PR：
+#   · 版本更新（version updates）——「上游有新版本了」，由本文件控制
+#   · 安全更新（security updates）——「你用的版本有漏洞，这是修复版」，由仓库设置控制
+#
+# ── 当前策略：停用「版本更新」，只保留「安全更新」──
+#
+#   open-pull-requests-limit: 0 的官方语义就是「临时停用该生态的版本更新」，
+#   而安全更新不受该上限约束、也不计入它，仍然会自动开 PR。官方原文：
+#     "You can temporarily disable version updates for a package manager
+#      by setting this option to zero."
+#     "Security update pull requests are not subject to this limit and do not
+#      count toward it."
+#
+#   效果：不再收到「有新版本了」的提醒（升级改为人工按需处理，尤其原生依赖
+#   必须本地构建一次 APK 才算验过，CI 覆盖不到那一层）；
+#   一旦某个依赖爆出漏洞且存在修复版，仍会自动开 PR 提醒。
+#
+# ── 想恢复自动提醒 ──
+#   把下面三处 open-pull-requests-limit 从 0 改回 5（或你想要的数字）即可。
+# ── 想手动看有哪些新版本 ──
+#   在 app/ 下执行：npm outdated
 #
 # 文档：https://docs.github.com/code-security/dependabot/dependabot-version-updates
 
@@ -15,7 +35,7 @@ updates:
       day: monday
       time: '09:00'
       timezone: Asia/Shanghai
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 0 # 0 = 停用版本更新 PR（安全更新不受影响）
     commit-message:
       prefix: 'chore(deps)'
     labels:
@@ -26,11 +46,9 @@ updates:
         patterns: ['*']
         update-types: ['minor', 'patch']
     ignore:
-      # 大版本一律不自动开 PR，全部人工确认。理由：
+      # 大版本一律人工处理。保留此规则：日后恢复版本更新时它仍然生效。
       #   · Capacitor / React / Vite / TypeScript 的大版本会连带改原生工程或构建配置；
-      #   · @types/* 的大版本常与运行时版本不匹配（实测自动开出 @types/node 24 → 26）。
-      # 注意：这里只影响「版本更新」。安全更新由仓库的 Dependabot security updates 单独处理，
-      # 不受 ignore 影响，有漏洞仍会自动修复。
+      #   · @types/* 的大版本常与运行时版本不匹配（曾自动开出 @types/node 24 → 26）。
       - dependency-name: '*'
         update-types: ['version-update:semver-major']
 
@@ -42,16 +60,15 @@ updates:
       day: monday
       time: '09:00'
       timezone: Asia/Shanghai
-    open-pull-requests-limit: 3
+    open-pull-requests-limit: 0
     commit-message:
       prefix: 'chore(android-deps)'
     labels:
       - dependencies
       - android
     ignore:
-      # 实测它会直接开出 gradle-wrapper 8.14.3 → 9.8.0 这类大版本。
-      # Gradle 与 Android Gradle Plugin 的大版本升级会改构建脚本与插件 API，
-      # 必须人工单独立分支验证（本项目历史上 wrapper 曾不可用，改错了整个 Android 构建就废）。
+      # 曾直接开出 gradle-wrapper 8.14.3 → 9.8.0 这类大版本。
+      # Gradle 与 AGP 的大版本会改构建脚本与插件 API，必须人工单独立分支验证。
       - dependency-name: '*'
         update-types: ['version-update:semver-major']
 
@@ -62,7 +79,7 @@ updates:
       interval: monthly
       time: '09:00'
       timezone: Asia/Shanghai
-    open-pull-requests-limit: 3
+    open-pull-requests-limit: 0
     commit-message:
       prefix: 'chore(ci)'
     labels:
