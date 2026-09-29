@@ -1,3 +1,11 @@
+/**
+ * 码上记（LocalScan）—— 隐私优先的本地物品 / 库存管理
+ * Copyright (c) 2026 xhowu
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { parseHash, navigate, navFlags, TAB_ROUTES, type Route } from './router';
 import { getActiveWarehouseId, getTheme, getWarehouse } from './db';

@@ -1,4 +1,12 @@
 /**
+ * 码上记（LocalScan）—— 隐私优先的本地物品 / 库存管理
+ * Copyright (c) 2026 xhowu
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+/**
  * 中文商品标签文本解析。
  * 输入 OCR 得到的文本行，输出可映射到物品字段的候选值。
  * 纯启发式，不联网；识别不到就返回 null，由界面决定是否留空。

@@ -1,0 +1,46 @@
+name: 功能建议
+description: 提出一个新功能或改进建议
+title: '[建议] '
+labels: ['enhancement']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 先说清楚项目的边界
+
+        码上记是**隐私优先的本地工具**，三条基本原则：无账号、无云端、数据可带走。
+        所以下面这些方向**不会被接受**，请不必提交：
+
+        - 账号体系、云同步、团队协作、多端实时同步服务器
+        - 统计埋点、广告、社交、积分
+        - 任何「必须依赖服务端才能工作」的功能
+
+        这**不是能力问题，是取舍**：一旦引入账号或云端，就不再能保证数据不出设备。
+  - type: textarea
+    id: scene
+    attributes:
+      label: 你想解决什么场景
+      description: 请描述真实使用场景，而不是直接给功能名
+      placeholder: 例：我有一批耗材放在三个地方，盘点时想一次只打印其中一个位置的东西
+    validations:
+      required: true
+  - type: textarea
+    id: current
+    attributes:
+      label: 现在你是怎么做的
+      description: 如果现有功能能绕过去，也请写出来，方便判断是否真的需要新功能
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 你的建议方案
+    validations:
+      required: false
+  - type: checkboxes
+    id: boundary
+    attributes:
+      label: 边界确认
+      options:
+        - label: 我的建议不需要账号、云同步或服务端支持
+          required: true

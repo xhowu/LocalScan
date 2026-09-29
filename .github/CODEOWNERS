@@ -1,0 +1,8 @@
+# 默认所有文件由仓库所有者 review
+* @xhowu
+
+# 构建与发布相关，改动需格外小心（离线包红线、双 flavor 产物隔离都在这里）
+/app/scripts/ @xhowu
+/app/android/app/build.gradle @xhowu
+/.github/workflows/ @xhowu
+/website/ @xhowu

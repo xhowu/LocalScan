@@ -1,7 +1,8 @@
 {
   "name": "localscan",
   "private": true,
-  "version": "1.4.0",
+  "version": "1.10.0",
+  "license": "MPL-2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",

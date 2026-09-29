@@ -1,3 +1,11 @@
+/**
+ * 码上记（LocalScan）—— 隐私优先的本地物品 / 库存管理
+ * Copyright (c) 2026 xhowu
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 /** 自动滚动速度（px/秒）。恒定速度，不因文本长短变化。 */

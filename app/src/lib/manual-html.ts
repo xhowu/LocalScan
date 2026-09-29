@@ -1,4 +1,12 @@
 /**
+ * 码上记（LocalScan）—— 隐私优先的本地物品 / 库存管理
+ * Copyright (c) 2026 xhowu
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+/**
  * App 使用手册（内置版）：由 docs/码上记-App使用手册.md 转换生成
  *（H1 渲染为大标题；"目录"节跳过——App 内的目录是交互式的）。
  */

@@ -1,8 +1,15 @@
 # 码上记 LocalScan
 
+[![License: MPL-2.0](https://img.shields.io/badge/License-MPL--2.0-brightgreen.svg)](./LICENSE)
+[![Latest release](https://img.shields.io/github/v/release/xhowu/LocalScan?label=release)](https://github.com/xhowu/LocalScan/releases)
+[![CI](https://github.com/xhowu/LocalScan/actions/workflows/ci.yml/badge.svg)](https://github.com/xhowu/LocalScan/actions/workflows/ci.yml)
+[![Website](https://img.shields.io/badge/site-xhowu.github.io%2FLocalScan-blue)](https://xhowu.github.io/LocalScan/)
+
 注重隐私、无需账号与云端的**本地**物品 / 库存管理工具。数据默认不出设备，不绑账号、不上云。
 
 在线站点：**https://xhowu.github.io/LocalScan/**
+
+许可 [MPL-2.0](./LICENSE) ｜ 贡献指南 [CONTRIBUTING.md](./CONTRIBUTING.md) ｜ 安全策略 [SECURITY.md](./SECURITY.md) ｜ 变更日志 [CHANGELOG.md](./CHANGELOG.md)
 
 ## 下载
 
@@ -30,13 +37,15 @@ v1.10.0 每个版本按 CPU 架构可选：
 ```
 index.html / design.html / styles.css   官网产物（GitHub Pages 站点根）
 website/                                官网构建源（模板 + 组装脚本 + 素材）
+scripts/                                仓库维护脚本（变更日志、第三方清单自动生成）
 app/                                    主线 App 源码（= v1.10.0）
 v1.10.0/                                v1.10.0 源码快照（归档）
 v1.4.0/                                 v1.4.0 归档
   ├─ app/                               源码快照
   ├─ site/                              旧官网（历史）
   └─ dev-bounce-demo/                   回弹调试示例工程（历史）
-docs/                                   使用手册、版本-资产对照表
+docs/                                   使用手册、版本-资产对照表、第三方许可证清单
+.github/                                工程配置：CI、issue / PR 模板、依赖机器人
 ```
 
 约定：
@@ -44,6 +53,8 @@ docs/                                   使用手册、版本-资产对照表
 - **官网是产物**：`index.html` / `design.html` / `styles.css` 由 `website/build.mjs` 生成（从 `website/index.template.html` + `website/parts/` 组装），Pages 直接服务根目录这三个文件。改官网请改 `website/`，然后跑 `node website/build.mjs`。
 - **`app/` 是活代码**：日常开发与构建都在这（原生工程 `app/android/`、`node_modules`、`dist*` 均被忽略）。
 - **版本归档**：`vX.Y.Z/` 是该版本冻结的源码快照，只增不改；安装包不在仓库内，挂 Releases。
+- **`CHANGELOG.md` 与 `docs/THIRD-PARTY.md` 是自动生成的**，不要手改；重新生成用
+  `node scripts/gen-changelog.mjs` 和 `node scripts/gen-third-party.mjs`（CI 会校验是否同步）。
 
 ## 开发
 
@@ -51,7 +62,7 @@ docs/                                   使用手册、版本-资产对照表
 
 ```bash
 cd app
-npm install
+npm ci                       # 严格按 lockfile 安装（CI 用同一命令）
 npm run dev                  # Web 开发服务器
 npm run build                # 离线版 → dist
 npm run build:online         # 联网版 → dist-online
@@ -72,8 +83,24 @@ flavor/ABI 拆分与版本号配置、图标与启动图）。克隆后**不需�
 若某环境下 `gradlew` 不可用，可直接用系统 Gradle：
 `gradle -p android assembleOfflineDebug --max-workers=1`（低配机器再加 `-Dorg.gradle.parallel=false`）。
 
-版本号需**三处同步**：`app/src/lib/app-const.ts` 的 `APP_VERSION`、
-`app/android/app/build.gradle` 的 `versionCode` / `versionName`、`app/src/pages/ChangelogPage.tsx`。
+版本号需**多处同步**（CI 会校验前三处必须一致）：
+
+| 位置 | 内容 |
+|---|---|
+| `app/src/lib/app-const.ts` | `APP_VERSION` |
+| `app/android/app/build.gradle` | `versionCode` / `versionName` |
+| `app/package.json` | `version` |
+| `app/src/pages/ChangelogPage.tsx` | 追加一条版本日志（`CHANGELOG.md` 由它自动生成） |
+
+**离线包红线**：离线版承诺不含任何联网代码，构建后产物里不允许出现 `barcode-lookup`：
+
+```bash
+ls app/dist/assets | grep -c barcode-lookup          # 必须为 0
+ls app/dist-online/assets | grep -c barcode-lookup   # 必须为 1
+```
+
+两个 flavor 的 web 产物必须隔离（由 `app/scripts/cap-sync.mjs` 负责）。
+这条断言已写进 CI，改坏了会直接拦下来。
 
 ### 官网（website/ → 仓库根）
 
@@ -94,6 +121,19 @@ cp website/design.html website/styles.css .   # 设计方案页由 iframe 直接
 3. 建 Release 并上传（`gh release create v<版本> …`）——资产名必须与官网直链完全一致
 4. 同步 `website/index.template.html` 里的直链与包体大小 → 重建官网 → 复制到根
 5. 更新 `docs/RELEASES.md`；把当版源码复制成 `v<版本>/` 快照
+
+## 许可
+
+本项目采用 **[Mozilla Public License 2.0](./LICENSE)**（MPL-2.0）。用大白话说：
+
+- **可以直接用**：个人使用、公司内部使用、拿去改，都不需要任何授权，也不需要公开你的改动。
+- **改动要公开**：如果你**分发**了改过的版本（发安装包给别人、上架商店、放到网上），
+  那么**被修改过的那部分文件必须继续以 MPL 开源**。
+- **新增的独立文件可以闭源**：你可以把本项目与闭源代码组合在一起发布，只要不修改原来的文件。
+- **必须保留声明**：不能删除原作者署名与许可证文本。
+
+这不是法律意见；如需严格判断请咨询律师。第三方组件的许可证见
+[docs/THIRD-PARTY.md](./docs/THIRD-PARTY.md)。
 
 ## 关于
 

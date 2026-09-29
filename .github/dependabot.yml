@@ -1,0 +1,73 @@
+# 依赖更新机器人配置
+#
+# 作用：定期检查项目引用的第三方库有没有新版本、有没有已知安全漏洞，
+# 有的话自动开一个 PR，你审核后合并即可。它跑在 GitHub 服务器上，不需要本地环境。
+#
+# 文档：https://docs.github.com/code-security/dependabot/dependabot-version-updates
+
+version: 2
+updates:
+  # —— 前端依赖（React / Capacitor / Vite 等）——
+  - package-ecosystem: npm
+    directory: /app
+    schedule:
+      interval: weekly
+      day: monday
+      time: '09:00'
+      timezone: Asia/Shanghai
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: 'chore(deps)'
+    labels:
+      - dependencies
+    groups:
+      # 小版本与补丁合并成一个 PR，避免刷屏
+      npm-minor-patch:
+        patterns: ['*']
+        update-types: ['minor', 'patch']
+    ignore:
+      # Capacitor 大版本升级会连带改原生工程（android/ 下的配置与插件 API），
+      # 必须人工单独立分支验证，禁止机器人自动开 PR。
+      - dependency-name: '@capacitor/*'
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@capacitor-mlkit/*'
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@capawesome/*'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'react'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'react-dom'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'vite'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'typescript'
+        update-types: ['version-update:semver-major']
+
+  # —— Android 原生依赖（Gradle）——
+  - package-ecosystem: gradle
+    directory: /app/android
+    schedule:
+      interval: weekly
+      day: monday
+      time: '09:00'
+      timezone: Asia/Shanghai
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: 'chore(android-deps)'
+    labels:
+      - dependencies
+      - android
+
+  # —— GitHub Actions 自身 ——
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+      time: '09:00'
+      timezone: Asia/Shanghai
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: 'chore(ci)'
+    labels:
+      - dependencies
+      - ci

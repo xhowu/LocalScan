@@ -1,0 +1,168 @@
+name: CI
+
+# 触发：推送到 main、任何 PR、以及手动触发
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# 只读权限即可，CI 不需要写仓库
+permissions:
+  contents: read
+
+# 同一分支的新提交会取消上一轮，避免排队
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  web:
+    name: Web 构建与双版本校验
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 准备 Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - name: 安装依赖（严格按 lockfile）
+        run: npm ci
+
+      - name: 静态检查（oxlint）
+        run: npm run lint
+
+      - name: 构建离线版（含类型检查）
+        run: npm run build
+
+      - name: 构建联网版（含类型检查）
+        run: npm run build:online
+
+      # —— 核心红线 ——
+      # 离线版承诺「不含任何联网代码」：联网查询在编译期被整体移除，
+      # 因此产物里不允许出现 barcode-lookup chunk。曾经因为两个 flavor 共用
+      # 同一份 web 产物，导致离线包实际打进联网代码，这条断言就是为了防止复发。
+      - name: 离线包红线（不得含联网查询代码）
+        run: |
+          set -e
+          if ls dist/assets | grep -q 'barcode-lookup'; then
+            echo "::error::离线版产物中出现了 barcode-lookup —— 联网查询代码没有被编译期剥离"
+            ls -l dist/assets
+            exit 1
+          fi
+          if ! ls dist-online/assets | grep -q 'barcode-lookup'; then
+            echo "::error::联网版产物中缺少 barcode-lookup —— 双版本构建机制可能已失效"
+            ls -l dist-online/assets
+            exit 1
+          fi
+          test -f dist/index.html
+          test -f dist-online/index.html
+          echo "离线包红线通过：离线版 0 处、联网版 ≥1 处 barcode-lookup"
+
+      - name: 官网产物与仓库根保持一致
+        working-directory: .
+        run: |
+          node website/build.mjs
+          if ! diff -q website/index.html index.html; then
+            echo "::error::website/index.html 与仓库根 index.html 不一致 —— 改了模板请重建并同步到根目录"
+            exit 1
+          fi
+          echo "官网产物一致：可从 website/ 源码确定性重建"
+
+      # docs/THIRD-PARTY.md 由 node_modules 里各包的 license 字段汇总而来，
+      # 依赖变动后忘记重新生成会导致清单失真，这里校验。
+      - name: 第三方许可证清单已同步
+        working-directory: .
+        run: node scripts/gen-third-party.mjs --check
+
+  native:
+    name: 原生工程完整性
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      # app/android/ 里混着「手写资产」和「Capacitor 生成物」，两者都不能少：
+      # 手写资产（插件、图标、flavor 配置）一旦被误加进 .gitignore，
+      # 别人克隆下来就无法构建出等价 APK。这里把必需的几个点钉死。
+      - name: 必需的 Android 工程文件都在
+        run: |
+          set -e
+          files="
+          app/android/build.gradle
+          app/android/settings.gradle
+          app/android/variables.gradle
+          app/android/gradle/wrapper/gradle-wrapper.jar
+          app/android/gradlew
+          app/android/gradlew.bat
+          app/android/app/build.gradle
+          app/android/app/src/main/AndroidManifest.xml
+          app/android/app/src/main/java/com/localscan/app/MainActivity.java
+          app/android/app/src/main/java/com/localscan/app/ScannerActivity.java
+          app/android/app/src/main/java/com/localscan/app/LocalscanWebviewPlugin.java
+          app/android/app/src/main/java/com/localscan/app/LocalscanScannerPlugin.java
+          app/android/app/src/main/java/com/localscan/app/LocalscanCameraOverlayPlugin.java
+          app/android/app/src/offline/res/values/strings.xml
+          app/android/app/src/online/res/values/strings.xml
+          "
+          for f in $files; do
+            if [ ! -f "$f" ]; then
+              echo "::error::缺少原生工程文件 $f —— 检查是否被 .gitignore 误排除"
+              exit 1
+            fi
+          done
+          echo "原生工程完整 ✓"
+
+      - name: 两个 flavor 的 build.gradle 配置仍在
+        run: |
+          set -e
+          grep -q 'productFlavors' app/android/app/build.gradle
+          grep -q 'splits' app/android/app/build.gradle
+          grep -qE '(^|[[:space:]])offline[[:space:]]*\{' app/android/app/build.gradle
+          grep -qE '(^|[[:space:]])online[[:space:]]*\{' app/android/app/build.gradle
+          grep -q 'applicationIdSuffix' app/android/app/build.gradle
+          echo "flavor / ABI 拆分 / 包名后缀配置齐全 ✓"
+
+  app-metadata:
+    name: 元数据一致性
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      # 版本号散落在多处，最容易改漏。这里统一比对，改漏就报错。
+      - name: APP_VERSION / versionName / package.json 三处一致
+        run: |
+          set -e
+          v1=$(grep -oP "APP_VERSION\s*=\s*'\K[^']+" app/src/lib/app-const.ts)
+          v2=$(grep -oP "versionName\s+\"\K[^\"]+" app/android/app/build.gradle)
+          v3=$(grep -oP '"version"\s*:\s*"\K[^"]+" app/package.json | head -1)
+          echo "app-const.ts  APP_VERSION = $v1"
+          echo "build.gradle  versionName = $v2"
+          echo "package.json  version     = $v3"
+          if [ "$v1" != "$v2" ] || [ "$v1" != "$v3" ]; then
+            echo "::error::版本号不一致：三处必须同步（app-const.ts / build.gradle / package.json）"
+            exit 1
+          fi
+          echo "版本号一致 ✓"
+
+      # CHANGELOG.md 由 App 内版本日志自动生成，防止两处漂移
+      - name: 变更日志已同步
+        run: node scripts/gen-changelog.mjs --check
+
+      # 许可证只能有一个，防止后续被误改或误删
+      - name: 许可证存在且为 MPL-2.0
+        run: |
+          set -e
+          test -f LICENSE
+          grep -q "Mozilla Public License Version 2.0" LICENSE
+          grep -q '"license": "MPL-2.0"' app/package.json
+          echo "许可证：MPL-2.0 ✓"

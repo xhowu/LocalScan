@@ -1,4 +1,12 @@
 /**
+ * 码上记（LocalScan）—— 隐私优先的本地物品 / 库存管理
+ * Copyright (c) 2026 xhowu
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+/**
  * 把指定版本的 Web 产物同步进 Android 工程。
  *
  * 用法：node scripts/cap-sync.mjs [offline|online]

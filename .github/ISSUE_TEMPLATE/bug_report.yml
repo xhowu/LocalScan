@@ -1,0 +1,81 @@
+name: 缺陷报告
+description: 报告一个可复现的问题（崩溃、显示异常、功能与手册不符）
+title: '[缺陷] '
+labels: ['bug']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        提交前请先确认：
+
+        - 已查阅[使用手册](https://xhowu.github.io/LocalScan/#/manual)与[版本日志](https://xhowu.github.io/LocalScan/#/log)
+        - 已在现有 issue 中搜索过同样的问题
+
+        > **隐私提醒**：本项目的定位是「数据不出设备」。提交截图或日志时请**先打码**物品名称、价格、地址、条码等个人信息。
+  - type: dropdown
+    id: flavor
+    attributes:
+      label: 使用的版本
+      description: 设置页 → 关于 → 版本 可以看到；两个版本可共存，图标相同但包名不同
+      options:
+        - 离线版（com.localscan.app）
+        - 联网版（com.localscan.app.online）
+        - 不确定
+    validations:
+      required: true
+  - type: input
+    id: app-version
+    attributes:
+      label: App 版本
+      placeholder: 例：1.10.0（设置页 → 关于 → 版本）
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: 机型与系统版本
+      description: 部分问题（如相机让位、滚动卡顿）与厂商系统强相关，请尽量写全
+      placeholder: 例：红米 K70 / HyperOS 3（Android 16）
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      description: 越具体越好；能稳定复现的话请写清点过哪里、停留多久
+      placeholder: |
+        1. 打开「物品」页
+        2. 点击右下角加号
+        3. 扫一个 EAN13 条码
+        4. ……
+    validations:
+      required: true
+  - type: textarea
+    id: result
+    attributes:
+      label: 期望结果与实际结果
+    validations:
+      required: true
+  - type: input
+    id: freq
+    attributes:
+      label: 出现频率
+      placeholder: 例：必现 / 偶现（约 1/5 次）/ 只出现过一次
+    validations:
+      required: false
+  - type: textarea
+    id: extra
+    attributes:
+      label: 截图或录屏（可选）
+      description: 可直接把图片拖进来。请务必先打码个人信息。
+    validations:
+      required: false
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: 确认
+      options:
+        - label: 我使用的是[官方 Releases](https://github.com/xhowu/LocalScan/releases) 下载的安装包，不是第三方重打包版本
+          required: true
+        - label: 提交内容中不包含我的真实物品数据等隐私信息
+          required: true

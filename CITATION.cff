@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "如果这个项目对你的工作有帮助，可以参考以下信息引用它。"
+title: "码上记（LocalScan）"
+abstract: >-
+  隐私优先的本地物品 / 库存管理应用：免账号、数据不出设备。支持扫码建档、
+  批次与临期管理、多仓库、导出与加密备份，并提供不含任何联网代码的离线版。
+type: software
+authors:
+  - name: "xhowu"
+    website: "https://github.com/xhowu"
+version: 1.10.0
+date-released: 2026-09-25
+license: MPL-2.0
+url: "https://xhowu.github.io/LocalScan/"
+repository-code: "https://github.com/xhowu/LocalScan"
+keywords:
+  - inventory-management
+  - local-first
+  - offline-first
+  - privacy
+  - android
+  - barcode-scanner
+  - capacitor
+  - react

@@ -1,0 +1,16 @@
+# 关闭空白 issue：强制走上面的表单，避免收到无法处理的内容
+blank_issues_enabled: false
+
+contact_links:
+  - name: 使用手册（19 章 · 与实现逐条对应）
+    url: https://xhowu.github.io/LocalScan/#/manual
+    about: 功能怎么用、日期怎么算、导出与同步怎么操作，先看这里
+  - name: 版本日志
+    url: https://xhowu.github.io/LocalScan/#/log
+    about: 看看你的问题是不是在某个版本已经修好了
+  - name: 下载与双版本差异
+    url: https://xhowu.github.io/LocalScan/
+    about: 离线版 / 联网版的区别，以及全部安装包直链
+  - name: 安全漏洞请勿公开提交
+    url: https://github.com/xhowu/LocalScan/security/advisories/new
+    about: 请按 SECURITY.md 的说明私下报告，不要在 issue 里公开细节

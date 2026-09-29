@@ -1,0 +1,23 @@
+# 编辑器统一约定；不改变任何构建行为，只影响编辑器默认值。
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{ts,tsx,js,mjs,cjs,json,css,html,yml,yaml}]
+indent_style = space
+indent_size = 2
+
+[*.md]
+# Markdown 里行尾两个空格是有意义的手动换行，不能裁掉
+trim_trailing_whitespace = false
+
+[*.{bat,cmd}]
+end_of_line = crlf
+
+[*.{png,jpg,jpeg,webp,ico,jar,apk,ttf,woff2}]
+# 二进制文件不做任何文本处理
+insert_final_newline = false

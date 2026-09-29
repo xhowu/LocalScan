@@ -1,4 +1,12 @@
 /**
+ * 码上记（LocalScan）—— 隐私优先的本地物品 / 库存管理
+ * Copyright (c) 2026 xhowu
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+/**
  * 条码商品信息查询（联网功能，仅打包进「联网版」）。
  *
  * 说明：中国物品编码中心官方接口需要会员 AppKey/Secret 签名，未对外开放匿名调用。
