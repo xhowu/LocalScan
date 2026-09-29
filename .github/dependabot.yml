@@ -26,21 +26,12 @@ updates:
         patterns: ['*']
         update-types: ['minor', 'patch']
     ignore:
-      # Capacitor 大版本升级会连带改原生工程（android/ 下的配置与插件 API），
-      # 必须人工单独立分支验证，禁止机器人自动开 PR。
-      - dependency-name: '@capacitor/*'
-        update-types: ['version-update:semver-major']
-      - dependency-name: '@capacitor-mlkit/*'
-        update-types: ['version-update:semver-major']
-      - dependency-name: '@capawesome/*'
-        update-types: ['version-update:semver-major']
-      - dependency-name: 'react'
-        update-types: ['version-update:semver-major']
-      - dependency-name: 'react-dom'
-        update-types: ['version-update:semver-major']
-      - dependency-name: 'vite'
-        update-types: ['version-update:semver-major']
-      - dependency-name: 'typescript'
+      # 大版本一律不自动开 PR，全部人工确认。理由：
+      #   · Capacitor / React / Vite / TypeScript 的大版本会连带改原生工程或构建配置；
+      #   · @types/* 的大版本常与运行时版本不匹配（实测自动开出 @types/node 24 → 26）。
+      # 注意：这里只影响「版本更新」。安全更新由仓库的 Dependabot security updates 单独处理，
+      # 不受 ignore 影响，有漏洞仍会自动修复。
+      - dependency-name: '*'
         update-types: ['version-update:semver-major']
 
   # —— Android 原生依赖（Gradle）——
@@ -57,6 +48,12 @@ updates:
     labels:
       - dependencies
       - android
+    ignore:
+      # 实测它会直接开出 gradle-wrapper 8.14.3 → 9.8.0 这类大版本。
+      # Gradle 与 Android Gradle Plugin 的大版本升级会改构建脚本与插件 API，
+      # 必须人工单独立分支验证（本项目历史上 wrapper 曾不可用，改错了整个 Android 构建就废）。
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
 
   # —— GitHub Actions 自身 ——
   - package-ecosystem: github-actions
