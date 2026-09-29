@@ -139,20 +139,29 @@ jobs:
         uses: actions/checkout@v4
 
       # 版本号散落在多处，最容易改漏。这里统一比对，改漏就报错。
+      # 用 Node 而不是 grep -oP：模式里同时含单双引号，写进 shell 极易引号不配对。
       - name: APP_VERSION / versionName / package.json 三处一致
         run: |
           set -e
-          v1=$(grep -oP "APP_VERSION\s*=\s*'\K[^']+" app/src/lib/app-const.ts)
-          v2=$(grep -oP "versionName\s+\"\K[^\"]+" app/android/app/build.gradle)
-          v3=$(grep -oP '"version"\s*:\s*"\K[^"]+" app/package.json | head -1)
-          echo "app-const.ts  APP_VERSION = $v1"
-          echo "build.gradle  versionName = $v2"
-          echo "package.json  version     = $v3"
-          if [ "$v1" != "$v2" ] || [ "$v1" != "$v3" ]; then
-            echo "::error::版本号不一致：三处必须同步（app-const.ts / build.gradle / package.json）"
-            exit 1
-          fi
-          echo "版本号一致 ✓"
+          node <<'JS'
+          const fs = require('node:fs');
+          const pick = (file, re) => {
+            const m = fs.readFileSync(file, 'utf8').match(re);
+            if (!m) throw new Error(`${file} 中找不到版本号`);
+            return m[1];
+          };
+          const v1 = pick('app/src/lib/app-const.ts', /APP_VERSION\s*=\s*'([^']+)'/);
+          const v2 = pick('app/android/app/build.gradle', /versionName\s+"([^"]+)"/);
+          const v3 = JSON.parse(fs.readFileSync('app/package.json', 'utf8')).version;
+          console.log('app-const.ts  APP_VERSION =', v1);
+          console.log('build.gradle  versionName =', v2);
+          console.log('package.json  version     =', v3);
+          if (v1 !== v2 || v1 !== v3) {
+            console.error('::error::版本号不一致：三处必须同步（app-const.ts / build.gradle / package.json）');
+            process.exit(1);
+          }
+          console.log('版本号一致 ✓');
+          JS
 
       # CHANGELOG.md 由 App 内版本日志自动生成，防止两处漂移
       - name: 变更日志已同步
