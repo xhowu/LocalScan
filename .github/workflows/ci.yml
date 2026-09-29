@@ -25,7 +25,7 @@ jobs:
         working-directory: app
     steps:
       - name: 检出代码
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: 准备 Node
         uses: actions/setup-node@v4
@@ -88,7 +88,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 检出代码
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # app/android/ 里混着「手写资产」和「Capacitor 生成物」，两者都不能少：
       # 手写资产（插件、图标、flavor 配置）一旦被误加进 .gitignore，
@@ -136,7 +136,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 检出代码
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # 版本号散落在多处，最容易改漏。这里统一比对，改漏就报错。
       # 用 Node 而不是 grep -oP：模式里同时含单双引号，写进 shell 极易引号不配对。
